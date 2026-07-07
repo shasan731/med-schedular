@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.meditrack.AppGraph
 import com.meditrack.data.repository.AppSettings
+import com.meditrack.data.repository.ThemeMode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -40,6 +41,10 @@ class SettingsViewModel : ViewModel() {
 
     fun setVibrationEnabled(enabled: Boolean) {
         settingsRepository.updateVibrationEnabled(enabled)
+    }
+
+    fun setThemeMode(mode: ThemeMode) {
+        settingsRepository.updateThemeMode(mode)
     }
 
     fun exportJson() {

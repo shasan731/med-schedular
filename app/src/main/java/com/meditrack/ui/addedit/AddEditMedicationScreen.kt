@@ -16,6 +16,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -35,7 +36,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.meditrack.domain.model.ScheduleType
 import com.meditrack.domain.model.TreatmentType
 import com.meditrack.ui.components.BasicCard
+import com.meditrack.ui.components.PrimaryActionButton
 import com.meditrack.ui.components.ScreenHeader
+import com.meditrack.ui.components.SecondaryActionButton
 import com.meditrack.ui.components.WarningBand
 import com.meditrack.ui.stockText
 import java.time.Instant
@@ -54,70 +57,73 @@ fun AddEditMedicationScreen(
 ) {
     val state by viewModel.state.collectAsState()
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        item {
-            ScreenHeader(
-                title = if (medicationId == null) "Add Medication" else "Edit Medication",
-                subtitle = "Use the same pattern your doctor writes, such as 1+0+1."
-            )
-        }
-        state.errorMessage?.let { message ->
-            item { WarningBand(text = message, modifier = Modifier.padding(horizontal = 16.dp)) }
-        }
-        state.warningMessage?.let { message ->
-            item { WarningBand(text = message, modifier = Modifier.padding(horizontal = 16.dp)) }
-        }
-        item {
-            MedicineSection(state = state, update = viewModel::update)
-        }
-        item {
-            TreatmentSection(state = state, update = viewModel::update)
-        }
-        item {
-            PrescriptionSection(state = state, update = viewModel::update)
-        }
-        item {
-            StockSection(state = state, update = viewModel::update)
-        }
-        item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                Button(
-                    onClick = { viewModel.save(onSaved) },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(54.dp)
-                ) {
-                    Text("Save Medication")
-                }
-                OutlinedButton(
-                    onClick = onCancel,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(54.dp)
-                ) {
-                    Text("Cancel")
-                }
-            }
-        }
-        if (state.warningMessage != null) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
             item {
-                OutlinedButton(
-                    onClick = onSaved,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                ) {
-                    Text("Done")
-                }
+                ScreenHeader(
+                    title = if (medicationId == null) "Add Medication" else "Edit Medication",
+                    subtitle = "Use the same pattern your doctor writes, such as 1+0+1."
+                )
             }
+            state.errorMessage?.let { message ->
+                item { WarningBand(text = message, modifier = Modifier.padding(horizontal = 16.dp)) }
+            }
+            state.warningMessage?.let { message ->
+                item { WarningBand(text = message, modifier = Modifier.padding(horizontal = 16.dp)) }
+            }
+            item {
+                MedicineSection(state = state, update = viewModel::update)
+            }
+            item {
+                TreatmentSection(state = state, update = viewModel::update)
+            }
+            item {
+                PrescriptionSection(state = state, update = viewModel::update)
+            }
+            item {
+                StockSection(state = state, update = viewModel::update)
+            }
+        }
+        AddEditBottomActions(
+            savedWithWarning = state.warningMessage != null,
+            onSave = { viewModel.save(onSaved) },
+            onDone = onSaved,
+            onCancel = onCancel
+        )
+    }
+}
+
+@Composable
+private fun AddEditBottomActions(
+    savedWithWarning: Boolean,
+    onSave: () -> Unit,
+    onDone: () -> Unit,
+    onCancel: () -> Unit
+) {
+    Surface(
+        tonalElevation = 3.dp,
+        shadowElevation = 6.dp,
+        color = MaterialTheme.colorScheme.surface
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            SecondaryActionButton(
+                text = "Cancel",
+                onClick = onCancel,
+                modifier = Modifier.weight(1f)
+            )
+            PrimaryActionButton(
+                text = if (savedWithWarning) "Done" else "Save Medication",
+                onClick = if (savedWithWarning) onDone else onSave,
+                modifier = Modifier.weight(1f)
+            )
         }
     }
 }

@@ -5,9 +5,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -29,33 +32,43 @@ fun ScreenHeader(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 20.dp, vertical = 16.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+            Text(title, style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
             if (subtitle != null) {
                 Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.secondary)
             }
         }
         if (actionLabel != null && onAction != null) {
-            Button(onClick = onAction) { Text(actionLabel) }
+            Button(
+                onClick = onAction,
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.height(48.dp)
+            ) {
+                Text(actionLabel, fontWeight = FontWeight.SemiBold)
+            }
         }
     }
 }
 
 @Composable
 fun WarningBand(text: String, modifier: Modifier = Modifier) {
-    Text(
-        text = text,
-        modifier = modifier
-            .fillMaxWidth()
-            .background(Color(0xFFFFF3CD), RoundedCornerShape(8.dp))
-            .padding(12.dp),
-        color = Color(0xFF6B4E00),
-        style = MaterialTheme.typography.bodyMedium
-    )
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        color = MaterialTheme.colorScheme.secondaryContainer
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(16.dp),
+            color = MaterialTheme.colorScheme.onSecondaryContainer,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold
+        )
+    }
 }
 
 @Composable
@@ -68,7 +81,7 @@ fun StatusBadge(
         text = text,
         modifier = modifier
             .background(color.copy(alpha = 0.14f), RoundedCornerShape(20.dp))
-            .padding(horizontal = 10.dp, vertical = 5.dp),
+            .padding(horizontal = 12.dp, vertical = 6.dp),
         color = color,
         style = MaterialTheme.typography.labelMedium,
         fontWeight = FontWeight.SemiBold
@@ -86,7 +99,8 @@ fun ConfirmingTextButton(
 ) {
     OutlinedButton(
         onClick = if (awaitingConfirmation) onConfirm else onFirstClick,
-        modifier = modifier
+        modifier = modifier.height(48.dp),
+        shape = RoundedCornerShape(14.dp)
     ) {
         Text(if (awaitingConfirmation) confirmingLabel else label)
     }
@@ -97,12 +111,43 @@ fun BasicCard(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
-    Surface(
+    ElevatedCard(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 1.dp,
-        shadowElevation = 1.dp,
-        content = content
-    )
+        shape = RoundedCornerShape(22.dp)
+    ) {
+        content()
+    }
+}
+
+@Composable
+fun PrimaryActionButton(
+    text: String,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Button(
+        onClick = onClick,
+        modifier = modifier.height(54.dp),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Text(text, fontWeight = FontWeight.Bold)
+    }
+}
+
+@Composable
+fun SecondaryActionButton(
+    text: String,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    OutlinedButton(
+        onClick = onClick,
+        modifier = modifier.height(54.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = ButtonDefaults.outlinedButtonColors(
+            contentColor = MaterialTheme.colorScheme.primary
+        )
+    ) {
+        Text(text, fontWeight = FontWeight.SemiBold)
+    }
 }

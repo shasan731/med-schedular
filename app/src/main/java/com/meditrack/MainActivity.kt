@@ -6,6 +6,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import com.meditrack.ui.MediTrackAppRoot
 import com.meditrack.ui.theme.MediTrackTheme
 
@@ -19,7 +21,8 @@ class MainActivity : ComponentActivity() {
         AppGraph.initialize(this)
         requestNotificationPermissionIfNeeded()
         setContent {
-            MediTrackTheme {
+            val settings by AppGraph.settingsRepository.observeSettings().collectAsState()
+            MediTrackTheme(themeMode = settings.themeMode) {
                 MediTrackAppRoot()
             }
         }

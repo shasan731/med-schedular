@@ -1,23 +1,29 @@
 package com.meditrack.ui
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Inventory2
+import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.Today
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.navigation.NavDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -38,52 +44,76 @@ private object Routes {
     const val Settings = "settings"
 }
 
+private data class BottomDestination(
+    val route: String,
+    val label: String,
+    val icon: ImageVector
+)
+
 @Composable
 fun MediTrackAppRoot() {
     val navController = rememberNavController()
-    val bottomRoutes = listOf(
-        Routes.Dashboard to "Today",
-        Routes.Inventory to "Inventory",
-        Routes.AddEdit to "Add Med",
-        Routes.Settings to "Settings"
+    val bottomDestinations = listOf(
+        BottomDestination(Routes.Dashboard, "Today", Icons.Rounded.Today),
+        BottomDestination(Routes.Inventory, "Cabinet", Icons.Rounded.Inventory2),
+        BottomDestination(Routes.Settings, "Settings", Icons.Rounded.Settings)
     )
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
     val currentRoute = currentDestination?.route.orEmpty()
+    val showChrome = currentRoute == Routes.Dashboard ||
+        currentRoute == Routes.Inventory ||
+        currentRoute == Routes.Settings
+    val showAddButton = currentRoute == Routes.Dashboard || currentRoute == Routes.Inventory
 
     Scaffold(
         bottomBar = {
-            Surface(
-                tonalElevation = 4.dp,
-                shadowElevation = 4.dp,
-                color = MaterialTheme.colorScheme.surface
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 10.dp, vertical = 10.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+            if (showChrome) {
+                NavigationBar(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    tonalElevation = 4.dp
                 ) {
-                    bottomRoutes.forEach { (route, label) ->
-                        val selected = when (route) {
-                            Routes.AddEdit -> currentRoute.startsWith(Routes.AddEdit)
-                            Routes.Inventory -> currentRoute == Routes.Inventory ||
-                                currentRoute.startsWith(Routes.Detail)
-                            else -> currentRoute == route
-                        }
-                        BottomNavPill(
-                            label = label,
+                    bottomDestinations.forEach { destination ->
+                        val selected = currentDestination.isSelected(destination.route)
+                        NavigationBarItem(
                             selected = selected,
                             onClick = {
-                                navController.navigate(route) {
+                                navController.navigate(destination.route) {
                                     launchSingleTop = true
                                     restoreState = true
                                     popUpTo(Routes.Dashboard) { saveState = true }
                                 }
                             },
-                            modifier = Modifier.weight(1f)
+                            icon = {
+                                Icon(destination.icon, contentDescription = destination.label)
+                            },
+                            label = {
+                                Text(
+                                    destination.label,
+                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+                                )
+                            },
+                            alwaysShowLabel = true,
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                selectedTextColor = MaterialTheme.colorScheme.primary,
+                                indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         )
                     }
+                }
+            }
+        },
+        floatingActionButton = {
+            if (showAddButton) {
+                ExtendedFloatingActionButton(
+                    onClick = { navController.navigate(Routes.AddEdit) },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ) {
+                    Text("Add Medicine", fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -91,7 +121,35 @@ fun MediTrackAppRoot() {
         NavHost(
             navController = navController,
             startDestination = Routes.Dashboard,
-            modifier = Modifier.padding(padding)
+            modifier = Modifier.padding(padding),
+            enterTransition = {
+                fadeIn(animationSpec = tween(180)) +
+                    slideIntoContainer(
+                        AnimatedContentTransitionScope.SlideDirection.Left,
+                        animationSpec = tween(220)
+                    )
+            },
+            exitTransition = {
+                fadeOut(animationSpec = tween(120)) +
+                    slideOutOfContainer(
+                        AnimatedContentTransitionScope.SlideDirection.Left,
+                        animationSpec = tween(220)
+                    )
+            },
+            popEnterTransition = {
+                fadeIn(animationSpec = tween(180)) +
+                    slideIntoContainer(
+                        AnimatedContentTransitionScope.SlideDirection.Right,
+                        animationSpec = tween(220)
+                    )
+            },
+            popExitTransition = {
+                fadeOut(animationSpec = tween(120)) +
+                    slideOutOfContainer(
+                        AnimatedContentTransitionScope.SlideDirection.Right,
+                        animationSpec = tween(220)
+                    )
+            }
         ) {
             composable(Routes.Dashboard) {
                 DashboardScreen(
@@ -142,36 +200,10 @@ fun MediTrackAppRoot() {
     }
 }
 
-@Composable
-private fun BottomNavPill(
-    label: String,
-    selected: Boolean,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    val shape = RoundedCornerShape(14.dp)
-    if (selected) {
-        Button(
-            onClick = onClick,
-            modifier = modifier.height(58.dp),
-            shape = shape,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            )
-        ) {
-            Text(label, fontWeight = FontWeight.Bold)
-        }
-    } else {
-        OutlinedButton(
-            onClick = onClick,
-            modifier = modifier.height(58.dp),
-            shape = shape,
-            colors = ButtonDefaults.outlinedButtonColors(
-                contentColor = MaterialTheme.colorScheme.onSurface
-            )
-        ) {
-            Text(label)
-        }
+private fun NavDestination?.isSelected(route: String): Boolean {
+    val currentRoute = this?.route.orEmpty()
+    return when (route) {
+        Routes.Inventory -> currentRoute == Routes.Inventory || currentRoute.startsWith(Routes.Detail)
+        else -> currentRoute == route
     }
 }

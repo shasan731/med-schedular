@@ -32,6 +32,7 @@ The app is a working Android MVP built with:
 - Android local notifications
 - SharedPreferences for simple local settings
 - GitHub Actions for debug APK builds
+- Material 3 light, dark, and system theme modes
 
 The app currently builds successfully as a debug APK and has JVM unit tests for core medication business logic.
 
@@ -333,16 +334,26 @@ ui/MediTrackAppRoot.kt
 Primary tabs:
 
 - Today
-- Inventory
-- Add Med
+- Cabinet
 - Settings
 
-Current bottom navigation uses large pill-style buttons:
+Current navigation uses a Material 3 app shell:
 
-- Selected tab: filled primary color with bold text.
-- Unselected tabs: outlined buttons.
+- A bottom `NavigationBar` is shown on Today, Cabinet, and Settings.
+- Each tab uses a recognizable Material icon plus an always-visible label.
+- Selected tabs use a filled indicator, primary text color, and bold label text.
+- Add/Edit and Detail screens hide the bottom bar so the task stays focused.
+- A prominent floating `Add Medicine` button appears on Today and Cabinet.
+- Screen changes use short fade and slide transitions through Navigation Compose.
 - Labels are always visible.
 - Medication detail screens keep Inventory selected because they are part of the medication inventory flow.
+
+Theme behavior:
+
+- `System` follows the device light/dark setting.
+- `Light` forces the light palette.
+- `Dark` forces the dark palette.
+- Warning and alert surfaces use Material color roles so they remain readable in both light and dark themes.
 
 ### Today Screen
 
@@ -371,6 +382,7 @@ UX details:
   - Refill warnings show "Refill reminders".
 - Warning text uses plain wording like "Refill soon".
 - Empty state prompts the user to add a medication.
+- The app-level floating action button gives users one stable place to add medicine from Today or Cabinet.
 
 Common prescription-time mapping:
 
@@ -483,11 +495,18 @@ ui/settings/SettingsViewModel.kt
 
 Purpose:
 
+- Choose the app theme: System, Light, or Dark.
 - Configure default low-stock threshold.
 - Toggle notifications.
 - Toggle vibration.
 - Export local data as JSON.
 - Clear all data with confirmation.
+
+UX details:
+
+- Theme choices are shown as three large segmented-style buttons.
+- The selected theme is filled; unselected choices are outlined.
+- Settings messages and warnings use readable Material alert surfaces.
 
 Export behavior:
 

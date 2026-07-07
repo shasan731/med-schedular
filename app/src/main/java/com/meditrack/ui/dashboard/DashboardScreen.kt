@@ -90,8 +90,16 @@ private fun AlertSummaryCard(
     modifier: Modifier = Modifier
 ) {
     val hasCritical = alerts.any { it.severity == AlertSeverity.CRITICAL }
-    val background = if (hasCritical) Color(0xFFFFE4E2) else Color(0xFFFFF3CD)
-    val foreground = if (hasCritical) Color(0xFFB42318) else Color(0xFF6B4E00)
+    val background = if (hasCritical) {
+        MaterialTheme.colorScheme.errorContainer
+    } else {
+        MaterialTheme.colorScheme.secondaryContainer
+    }
+    val foreground = if (hasCritical) {
+        MaterialTheme.colorScheme.onErrorContainer
+    } else {
+        MaterialTheme.colorScheme.onSecondaryContainer
+    }
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.medium,
