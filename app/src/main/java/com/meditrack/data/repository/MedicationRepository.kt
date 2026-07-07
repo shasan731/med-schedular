@@ -258,6 +258,7 @@ class MedicationRepository(
             .put("medicationId", medicationId)
             .put("scheduleType", scheduleType.name)
             .put("timeOfDay", timeOfDay)
+            .put("doseAmount", doseAmount)
             .put("intervalValue", intervalValue)
             .put("intervalUnit", intervalUnit?.name)
             .put("daysOfWeek", daysOfWeek)

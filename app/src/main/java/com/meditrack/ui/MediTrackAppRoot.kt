@@ -1,14 +1,16 @@
 package com.meditrack.ui
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.compose.ui.text.font.FontWeight
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -35,18 +37,24 @@ fun MediTrackAppRoot() {
     val bottomRoutes = listOf(
         Routes.Dashboard to "Today",
         Routes.Inventory to "Inventory",
-        Routes.AddEdit to "Add",
+        Routes.AddEdit to "Add Med",
         Routes.Settings to "Settings"
     )
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
+    val currentRoute = currentDestination?.route.orEmpty()
 
     Scaffold(
         bottomBar = {
             NavigationBar {
                 bottomRoutes.forEach { (route, label) ->
+                    val selected = when (route) {
+                        Routes.AddEdit -> currentRoute.startsWith(Routes.AddEdit)
+                        Routes.Detail -> currentRoute.startsWith(Routes.Detail)
+                        else -> currentRoute == route
+                    }
                     NavigationBarItem(
-                        selected = currentDestination?.hierarchy?.any { it.route == route } == true,
+                        selected = selected,
                         onClick = {
                             navController.navigate(route) {
                                 launchSingleTop = true
@@ -54,8 +62,26 @@ fun MediTrackAppRoot() {
                                 popUpTo(Routes.Dashboard) { saveState = true }
                             }
                         },
-                        icon = { Text(label.take(1)) },
-                        label = { Text(label) }
+                        icon = {
+                            Text(
+                                text = if (selected) "[x]" else "[ ]",
+                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+                            )
+                        },
+                        label = {
+                            Text(
+                                text = label,
+                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+                            )
+                        },
+                        alwaysShowLabel = true,
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                            indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.16f),
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     )
                 }
             }

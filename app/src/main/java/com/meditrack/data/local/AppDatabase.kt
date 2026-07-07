@@ -16,7 +16,7 @@ import com.meditrack.data.local.entity.MedicationScheduleEntity
         MedicationScheduleEntity::class,
         DoseEventEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(RoomConverters::class)

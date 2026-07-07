@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.meditrack.AppGraph
 import com.meditrack.data.local.entity.MedicationEntity
 import com.meditrack.data.local.entity.MedicationScheduleEntity
+import com.meditrack.domain.InventoryCalculator
 import com.meditrack.domain.ScheduleCalculator
 import com.meditrack.domain.model.IntervalUnit
 import com.meditrack.domain.model.ScheduleType
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 
 class AddEditMedicationViewModel(
     private val medicationId: Long?
@@ -38,7 +40,7 @@ class AddEditMedicationViewModel(
     }
 
     fun update(transform: (MedicationFormState) -> MedicationFormState) {
-        _state.value = transform(_state.value).copy(errorMessage = null, warningMessage = null)
+        _state.value = transform(_state.value).normalized().copy(errorMessage = null, warningMessage = null)
     }
 
     fun save(onSaved: () -> Unit) {
@@ -53,7 +55,7 @@ class AddEditMedicationViewModel(
             scheduler.rescheduleMedicationReminders()
             if (result.insufficientStockForCourse) {
                 _state.value = _state.value.copy(
-                    warningMessage = "Saved. Purchase warning: stock is below the total course requirement (${result.totalRequiredStock} needed)."
+                    warningMessage = "Saved. Purchase warning: you need ${result.totalRequiredStock} ${parsed.medication.doseUnit} for the full course."
                 )
             } else {
                 onSaved()
@@ -62,39 +64,45 @@ class AddEditMedicationViewModel(
     }
 
     private fun parseForm(form: MedicationFormState): ParsedMedication {
+        val normalized = form.normalized()
         val errors = mutableListOf<String>()
-        val startDate = parseDate(form.startDate, "Start date", errors)
-        val endDate = if (form.endDate.isBlank()) null else parseDate(form.endDate, "End date", errors)
-        val doseAmount = form.doseAmount.toDoubleOrNull()
-        val currentStock = form.currentStock.toDoubleOrNull()
-        val lowStockThreshold = form.lowStockThresholdDays.toDoubleOrNull()
+        val startDate = parseDate(normalized.startDate, "Start date", errors)
+        val currentStock = normalized.currentStock.toDoubleOrNull()
+        val lowStockThreshold = normalized.lowStockThresholdDays.toDoubleOrNull()
+        val scheduleParse = parseSchedules(normalized)
+        val schedules = scheduleParse.schedules
+        val firstDoseAmount = schedules.mapNotNull { it.doseAmount }.firstOrNull { it > 0.0 }
+            ?: normalized.doseAmount.toDoubleOrNull()
+            ?: 0.0
+        val endDate = resolveEndDate(normalized, startDate, errors)
 
-        if (doseAmount == null) errors += "Dose amount must be a number."
         if (currentStock == null) errors += "Current stock must be a number."
-        if (lowStockThreshold == null) errors += "Low stock threshold must be a number."
+        if (lowStockThreshold == null) errors += "Low-stock reminder days must be a number."
         if (startDate != null && endDate != null && endDate.isBefore(startDate)) {
             errors += "End date must be on or after the start date."
         }
+        errors += scheduleParse.errors
+
         if (errors.isNotEmpty() || startDate == null) {
-            return ParsedMedication(errors = errors)
+            return ParsedMedication(errors = errors.distinct())
         }
 
         val medication = MedicationEntity(
             id = medicationId ?: 0L,
-            name = form.name.trim(),
-            dosageInstruction = form.dosageInstruction.trim(),
-            doseAmount = doseAmount ?: 0.0,
-            doseUnit = form.doseUnit.ifBlank { "unit" }.trim(),
-            treatmentType = form.treatmentType,
+            name = normalized.name.trim(),
+            dosageInstruction = normalized.dosageInstruction.ifBlank {
+                normalized.generatedInstruction()
+            }.trim(),
+            doseAmount = firstDoseAmount,
+            doseUnit = normalized.doseUnit.ifBlank { "tablet" }.trim(),
+            treatmentType = normalized.treatmentType,
             startDate = startDate,
             endDate = endDate,
             currentStock = currentStock ?: 0.0,
             totalRequiredStock = null,
             lowStockThresholdDays = lowStockThreshold ?: 1.0
         )
-        val scheduleParse = parseSchedules(form)
-        val schedules = scheduleParse.schedules
-        errors += scheduleParse.errors
+
         errors += ValidationUtils.validateMedication(medication, schedules)
         return ParsedMedication(
             medication = medication,
@@ -103,7 +111,67 @@ class AddEditMedicationViewModel(
         )
     }
 
+    private fun resolveEndDate(
+        form: MedicationFormState,
+        startDate: LocalDate?,
+        errors: MutableList<String>
+    ): LocalDate? {
+        if (form.treatmentType == TreatmentType.CONTINUOUS) {
+            return if (form.endDate.isBlank()) null else parseDate(form.endDate, "End date", errors)
+        }
+        if (startDate == null) return null
+        val duration = form.courseDurationValue.toIntOrNull()
+        if (duration == null || duration <= 0) {
+            errors += "Fixed Course needs a course length such as 7 days, 2 weeks, or 1 month."
+            return null
+        }
+        return calculateEndDate(startDate, duration, form.courseDurationUnit)
+    }
+
     private fun parseSchedules(form: MedicationFormState): ParsedSchedules {
+        return if (form.useAdvancedSchedule) {
+            parseAdvancedSchedules(form)
+        } else {
+            parsePrescriptionPattern(form)
+        }
+    }
+
+    private fun parsePrescriptionPattern(form: MedicationFormState): ParsedSchedules {
+        val entries = listOf(
+            PrescriptionSlot("Morning", "08:00", form.morningDose),
+            PrescriptionSlot("Afternoon", "14:00", form.afternoonDose),
+            PrescriptionSlot("Night", "22:00", form.nightDose)
+        )
+        val errors = mutableListOf<String>()
+        val schedules = entries.mapNotNull { slot ->
+            val dose = slot.value.toDoubleOrNull()
+            if (dose == null || dose < 0.0) {
+                errors += "${slot.label} dose must be 0 or greater."
+                null
+            } else if (dose == 0.0) {
+                null
+            } else {
+                MedicationScheduleEntity(
+                    medicationId = medicationId ?: 0L,
+                    scheduleType = ScheduleType.SPECIFIC_TIMES,
+                    timeOfDay = slot.time,
+                    doseAmount = dose
+                )
+            }
+        }
+        if (schedules.isEmpty()) {
+            errors += "Enter at least one dose in Morning, Afternoon, or Night."
+        }
+        return ParsedSchedules(schedules = schedules, errors = errors)
+    }
+
+    private fun parseAdvancedSchedules(form: MedicationFormState): ParsedSchedules {
+        val doseAmount = form.doseAmount.toDoubleOrNull()
+        val errors = mutableListOf<String>()
+        if (doseAmount == null || doseAmount <= 0.0) {
+            errors += "Dose amount must be greater than 0."
+        }
+
         return when (form.scheduleType) {
             ScheduleType.SPECIFIC_TIMES -> {
                 val tokens = form.reminderTimes.split(",")
@@ -116,10 +184,13 @@ class AddEditMedicationViewModel(
                         MedicationScheduleEntity(
                             medicationId = medicationId ?: 0L,
                             scheduleType = ScheduleType.SPECIFIC_TIMES,
-                            timeOfDay = time
+                            timeOfDay = time,
+                            doseAmount = doseAmount
                         )
                     },
-                    errors = invalid.map { "Reminder time \"$it\" is not valid. Use a time like 08:00 or 8:00 AM." }
+                    errors = errors + invalid.map {
+                        "Reminder time \"$it\" is not valid. Use a time like 08:00 or 8:00 AM."
+                    }
                 )
             }
             ScheduleType.HOURLY_INTERVAL,
@@ -127,7 +198,6 @@ class AddEditMedicationViewModel(
             ScheduleType.WEEKLY_INTERVAL,
             ScheduleType.MONTHLY_INTERVAL -> {
                 val interval = form.intervalValue.toIntOrNull()
-                val errors = mutableListOf<String>()
                 val firstTimeInput = form.reminderTimes.split(",").firstOrNull()?.trim().orEmpty()
                 val normalizedTime = firstTimeInput.takeIf { it.isNotBlank() }
                     ?.let { ScheduleCalculator.normalizeTimeInput(it) }
@@ -137,7 +207,7 @@ class AddEditMedicationViewModel(
 
                 val daysOfWeek = form.daysOfWeek.trim()
                 if (form.scheduleType == ScheduleType.WEEKLY_INTERVAL) {
-                    val parsedDays = com.meditrack.domain.InventoryCalculator.parseDaysOfWeek(daysOfWeek)
+                    val parsedDays = InventoryCalculator.parseDaysOfWeek(daysOfWeek)
                     val tokens = daysOfWeek.split(",").map { it.trim() }.filter { it.isNotBlank() }
                     if (tokens.isEmpty() || parsedDays.isEmpty() || parsedDays.size != tokens.size) {
                         errors += "Weekly schedule days must be 1-7 or names like Mon, Wed, Fri."
@@ -155,6 +225,7 @@ class AddEditMedicationViewModel(
                             medicationId = medicationId ?: 0L,
                             scheduleType = form.scheduleType,
                             timeOfDay = normalizedTime,
+                            doseAmount = doseAmount,
                             intervalValue = interval,
                             intervalUnit = when (form.scheduleType) {
                                 ScheduleType.HOURLY_INTERVAL -> IntervalUnit.HOURS
@@ -192,6 +263,12 @@ class AddEditMedicationViewModel(
     }
 }
 
+enum class CourseDurationUnit(val label: String) {
+    DAYS("Days"),
+    WEEKS("Weeks"),
+    MONTHS("Months")
+}
+
 data class MedicationFormState(
     val name: String,
     val dosageInstruction: String,
@@ -201,6 +278,12 @@ data class MedicationFormState(
     val treatmentType: TreatmentType,
     val startDate: String,
     val endDate: String,
+    val courseDurationValue: String,
+    val courseDurationUnit: CourseDurationUnit,
+    val useAdvancedSchedule: Boolean,
+    val morningDose: String,
+    val afternoonDose: String,
+    val nightDose: String,
     val scheduleType: ScheduleType,
     val reminderTimes: String,
     val intervalValue: String,
@@ -210,6 +293,60 @@ data class MedicationFormState(
     val errorMessage: String? = null,
     val warningMessage: String? = null
 ) {
+    fun normalized(): MedicationFormState {
+        return if (treatmentType == TreatmentType.FIXED_COURSE && endDate != autoEndDate().orEmpty()) {
+            copy(endDate = autoEndDate().orEmpty())
+        } else {
+            this
+        }
+    }
+
+    fun prescriptionPattern(): String = "${morningDose.ifBlank { "0" }}+${afternoonDose.ifBlank { "0" }}+${nightDose.ifBlank { "0" }}"
+
+    fun autoEndDate(): String? {
+        if (treatmentType != TreatmentType.FIXED_COURSE) return endDate.ifBlank { null }
+        val start = runCatching { LocalDate.parse(startDate.trim()) }.getOrNull() ?: return null
+        val duration = courseDurationValue.toIntOrNull()?.takeIf { it > 0 } ?: return null
+        return calculateEndDate(start, duration, courseDurationUnit).toString()
+    }
+
+    fun estimatedSimpleRequiredStock(): Double? {
+        if (useAdvancedSchedule || treatmentType != TreatmentType.FIXED_COURSE) return null
+        val durationDays = durationDays() ?: return null
+        val daily = listOf(morningDose, afternoonDose, nightDose)
+            .sumOf { it.toDoubleOrNull()?.takeIf { dose -> dose > 0.0 } ?: 0.0 }
+        return daily * durationDays
+    }
+
+    fun generatedInstruction(): String {
+        if (useAdvancedSchedule) return "Take $doseAmount $doseUnit as scheduled."
+        val parts = listOf(
+            "morning" to morningDose,
+            "afternoon" to afternoonDose,
+            "night" to nightDose
+        ).mapNotNull { (label, value) ->
+            val dose = value.toDoubleOrNull()?.takeIf { it > 0.0 } ?: return@mapNotNull null
+            "${dose.cleanNumber()} $doseUnit $label"
+        }
+        return if (parts.isEmpty()) {
+            "Take as directed."
+        } else {
+            "Take ${parts.joinToString(", ")}."
+        }
+    }
+
+    private fun durationDays(): Int? {
+        val duration = courseDurationValue.toIntOrNull()?.takeIf { it > 0 } ?: return null
+        return when (courseDurationUnit) {
+            CourseDurationUnit.DAYS -> duration
+            CourseDurationUnit.WEEKS -> duration * 7
+            CourseDurationUnit.MONTHS -> {
+                val start = runCatching { LocalDate.parse(startDate.trim()) }.getOrNull() ?: return null
+                ChronoUnit.DAYS.between(start, calculateEndDate(start, duration, courseDurationUnit)).toInt() + 1
+            }
+        }
+    }
+
     companion object {
         fun default(defaultThreshold: Double): MedicationFormState {
             val today = LocalDate.now().toString()
@@ -222,6 +359,12 @@ data class MedicationFormState(
                 treatmentType = TreatmentType.CONTINUOUS,
                 startDate = today,
                 endDate = "",
+                courseDurationValue = "7",
+                courseDurationUnit = CourseDurationUnit.DAYS,
+                useAdvancedSchedule = false,
+                morningDose = "1",
+                afternoonDose = "0",
+                nightDose = "1",
                 scheduleType = ScheduleType.SPECIFIC_TIMES,
                 reminderTimes = "08:00, 14:00, 22:00",
                 intervalValue = "1",
@@ -237,6 +380,11 @@ data class MedicationFormState(
         ): MedicationFormState {
             val first = schedules.firstOrNull()
             val scheduleType = first?.scheduleType ?: ScheduleType.SPECIFIC_TIMES
+            val simpleDoses = schedules.toSimpleDoseMap(medication)
+            val useAdvanced = scheduleType != ScheduleType.SPECIFIC_TIMES || simpleDoses == null
+            val durationDays = medication.endDate?.let {
+                ChronoUnit.DAYS.between(medication.startDate, it).toInt() + 1
+            }?.coerceAtLeast(1) ?: 7
             val times = if (scheduleType == ScheduleType.SPECIFIC_TIMES) {
                 schedules.mapNotNull { it.timeOfDay }.joinToString(", ")
             } else {
@@ -245,22 +393,61 @@ data class MedicationFormState(
             return MedicationFormState(
                 name = medication.name,
                 dosageInstruction = medication.dosageInstruction,
-                doseAmount = medication.doseAmount.toString(),
+                doseAmount = medication.doseAmount.cleanNumber(),
                 doseUnit = medication.doseUnit,
-                currentStock = medication.currentStock.toString(),
+                currentStock = medication.currentStock.cleanNumber(),
                 treatmentType = medication.treatmentType,
                 startDate = medication.startDate.toString(),
                 endDate = medication.endDate?.toString().orEmpty(),
+                courseDurationValue = durationDays.toString(),
+                courseDurationUnit = CourseDurationUnit.DAYS,
+                useAdvancedSchedule = useAdvanced,
+                morningDose = simpleDoses?.get("08:00")?.cleanNumber() ?: "1",
+                afternoonDose = simpleDoses?.get("14:00")?.cleanNumber() ?: "0",
+                nightDose = simpleDoses?.get("22:00")?.cleanNumber() ?: "1",
                 scheduleType = scheduleType,
                 reminderTimes = times,
                 intervalValue = first?.intervalValue?.toString() ?: "1",
                 daysOfWeek = first?.daysOfWeek ?: "1,2,3,4,5,6,7",
                 dayOfMonth = first?.dayOfMonth?.toString() ?: "1",
-                lowStockThresholdDays = medication.lowStockThresholdDays.toString()
+                lowStockThresholdDays = medication.lowStockThresholdDays.cleanNumber()
             )
         }
     }
 }
+
+private fun calculateEndDate(
+    startDate: LocalDate,
+    duration: Int,
+    unit: CourseDurationUnit
+): LocalDate {
+    return when (unit) {
+        CourseDurationUnit.DAYS -> startDate.plusDays(duration.toLong() - 1)
+        CourseDurationUnit.WEEKS -> startDate.plusDays(duration.toLong() * 7L - 1)
+        CourseDurationUnit.MONTHS -> startDate.plusMonths(duration.toLong()).minusDays(1)
+    }
+}
+
+private fun List<MedicationScheduleEntity>.toSimpleDoseMap(
+    medication: MedicationEntity
+): Map<String, Double>? {
+    if (any { it.scheduleType != ScheduleType.SPECIFIC_TIMES }) return null
+    val allowedTimes = setOf("08:00", "14:00", "22:00")
+    if (any { it.timeOfDay !in allowedTimes }) return null
+    return associate { schedule ->
+        schedule.timeOfDay.orEmpty() to (schedule.doseAmount ?: medication.doseAmount)
+    }
+}
+
+private fun Double.cleanNumber(): String {
+    return if (this % 1.0 == 0.0) toInt().toString() else toString()
+}
+
+private data class PrescriptionSlot(
+    val label: String,
+    val time: String,
+    val value: String
+)
 
 private data class ParsedMedication(
     val medication: MedicationEntity? = null,

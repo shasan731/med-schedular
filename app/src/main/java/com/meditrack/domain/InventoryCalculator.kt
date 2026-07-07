@@ -15,8 +15,10 @@ object InventoryCalculator {
         schedules: List<MedicationScheduleEntity>
     ): Double {
         val activeSchedules = schedules.filter { it.isActive }
-        val expectedDosesPerDay = activeSchedules.sumOf { expectedDosesPerDay(it) }
-        return medication.doseAmount * expectedDosesPerDay
+        return activeSchedules.sumOf { schedule ->
+            val doseAmount = schedule.doseAmount?.takeIf { it > 0.0 } ?: medication.doseAmount
+            expectedDosesPerDay(schedule) * doseAmount
+        }
     }
 
     fun calculateDaysRemaining(currentStock: Double, dailyUsage: Double): Double {
@@ -32,13 +34,13 @@ object InventoryCalculator {
         if (medication.treatmentType != TreatmentType.FIXED_COURSE || medication.endDate == null) {
             return 0.0
         }
-        val scheduledDoses = ScheduleCalculator.countScheduledDosesBetween(
+        val requiredStock = ScheduleCalculator.sumScheduledDoseAmountBetween(
             medication = medication,
             schedules = schedules,
             startDate = medication.startDate,
             endDateInclusive = medication.endDate
         )
-        return roundStock(scheduledDoses * medication.doseAmount)
+        return roundStock(requiredStock)
     }
 
     fun shouldShowLowStockWarning(daysRemaining: Double, thresholdDays: Double): Boolean {
@@ -104,8 +106,12 @@ object InventoryCalculator {
             return null
         }
         if (medication.doseAmount <= 0.0) return 0
-        val requiredStock = calculateTotalRequiredStockForFixedCourse(medication, schedules)
-        return ceil(requiredStock / medication.doseAmount).toInt()
+        return ScheduleCalculator.countScheduledDosesBetween(
+            medication = medication,
+            schedules = schedules,
+            startDate = medication.startDate,
+            endDateInclusive = medication.endDate
+        )
     }
 
     private fun expectedDosesPerDay(schedule: MedicationScheduleEntity): Double {

@@ -7,13 +7,13 @@ Last updated: 2026-07-07
 MediTrack is a local, offline-first Android application for medication management. Its primary purpose is to help users:
 
 - Add medications and dosing instructions.
-- Define medication schedules.
+- Define medication schedules using a simple prescription-style pattern such as `1+0+1`, or advanced interval rules.
 - See the doses due today.
 - Mark doses as taken or skipped.
 - Automatically deduct stock only when a dose is taken.
 - Track current stock and estimated days remaining.
 - Warn when medication is low or out of stock.
-- Track finite medication courses and warn when the entered stock is not enough.
+- Track finite medication courses, auto-calculate the end date from course length, and warn when the entered stock is not enough.
 - Receive local dose reminder notifications with Taken and Skip actions.
 
 The app is intentionally local-only. It does not use login, backend servers, cloud sync, Firebase Cloud Messaging, ads, or paid SDKs.
@@ -34,6 +34,19 @@ The app is a working Android MVP built with:
 - GitHub Actions for debug APK builds
 
 The app currently builds successfully as a debug APK and has JVM unit tests for core medication business logic.
+
+The Add/Edit Medication flow is currently optimized for common prescription language. A typical entry can be made as:
+
+```text
+Paracetamol
+Fixed Course
+7 Days
+Pattern: 1+0+1
+Unit: tablet
+Current stock: 10
+```
+
+This means 1 tablet in the morning, 0 in the afternoon, and 1 at night for 7 days. MediTrack auto-calculates the end date and the full course stock requirement.
 
 Local debug APK output:
 
@@ -126,6 +139,7 @@ Schedule stores:
 - `medicationId`
 - `scheduleType`
 - `timeOfDay`
+- `doseAmount`
 - `intervalValue`
 - `intervalUnit`
 - `daysOfWeek`
@@ -139,6 +153,8 @@ Supported schedule types:
 - `DAILY_INTERVAL`
 - `WEEKLY_INTERVAL`
 - `MONTHLY_INTERVAL`
+
+`doseAmount` is optional on a schedule. When present, it represents how many units should be taken at that specific reminder time. This supports prescription patterns like `1+0+1` and `2+0+1`. If it is not present, the app falls back to the medication's base dose amount.
 
 ### Dose Event
 
@@ -189,6 +205,7 @@ Responsibilities:
 Important behavior:
 
 - Specific-time schedules create one dose per saved reminder time.
+- Specific-time schedules can carry their own per-time dose amount.
 - Hourly schedules continue across midnight from the medication start date and first dose time.
 - Daily interval schedules create a dose every N days from the start date.
 - Weekly schedules support selected days of week.
@@ -215,11 +232,11 @@ Responsibilities:
 
 Important behavior:
 
-- Daily usage is estimated from the active schedules and dose amount.
+- Daily usage is estimated from the active schedules and uses per-time dose amounts when available.
 - Days remaining is `currentStock / dailyUsage`.
 - If no scheduled usage exists, days remaining is treated as infinite and displayed as "No scheduled usage".
 - Low stock warning appears when days remaining is less than or equal to `lowStockThresholdDays`.
-- Fixed Course total required stock is calculated from actual generated scheduled dose dates between `startDate` and `endDate`, then multiplied by `doseAmount`.
+- Fixed Course total required stock is calculated from actual generated scheduled dose events between `startDate` and `endDate`, summing the dose amount for each event.
 - Fixed Course insufficient stock warning appears when current stock is below calculated required stock.
 
 ### Dose Status and Stock Deduction
@@ -317,8 +334,10 @@ Primary tabs:
 
 - Today
 - Inventory
-- Add
+- Add Med
 - Settings
+
+Bottom navigation uses explicit `[x]` and `[ ]` markers plus bold selected labels so the selected tab is easier to see for older users and users with weaker color contrast perception.
 
 ### Today Screen
 
@@ -377,17 +396,18 @@ ui/addedit/AddEditMedicationViewModel.kt
 Purpose:
 
 - Add or edit medication records.
-- Capture dosage, stock, treatment type, dates, schedule, and low-stock threshold.
+- Capture medicine name, unit, stock, treatment type, course length, prescription pattern, and low-stock threshold.
 
 UX details:
 
-- Material date pickers are used for start and end dates.
-- Continuous treatment allows optional end date clearing.
-- Quick reminder choices are provided for common schedules:
-  - Morning only
-  - Night only
-  - Morning, Afternoon, and Night
-- Users can still type custom times.
+- The primary flow matches common prescription wording such as `1+0+1`.
+- Morning, Afternoon, and Night are shown as separate dose quantity fields.
+- `1+0+1`, `1+1+1`, and `0+0+1` presets are available.
+- For Fixed Course medication, users enter a course length such as 7 Days, 2 Weeks, or 1 Month.
+- Fixed Course end date is automatically calculated from the start date and course length.
+- Estimated full-course stock requirement is shown for simple prescription patterns.
+- Material date pickers are still used for the start date and optional continuous-treatment end date.
+- Advanced schedule is available behind a switch for hourly, daily interval, weekly, or monthly plans.
 - Validation errors are shown in plain language.
 
 Validation:
@@ -395,13 +415,24 @@ Validation:
 - Medication name is required.
 - Dose amount must be greater than 0.
 - Current stock cannot be negative.
-- Fixed Course medication requires an end date.
-- End date must be on or after start date.
+- Fixed Course medication requires a course length.
+- Fixed Course end date is auto-calculated and must be on or after start date.
 - At least one schedule rule is required.
+- Simple prescription pattern must have at least one non-zero Morning, Afternoon, or Night dose.
 - Specific-time schedules require valid reminder times.
 - Invalid typed reminder times are rejected instead of silently dropped.
 - Weekly schedule days must be valid day numbers or day names.
 - Monthly day must be between 1 and 31.
+
+Simple prescription behavior:
+
+```text
+Morning dose    -> 08:00 reminder
+Afternoon dose  -> 14:00 reminder
+Night dose      -> 22:00 reminder
+```
+
+Only dose values greater than 0 generate reminders. For example, `1+0+1` creates morning and night dose events, and each event deducts 1 unit from stock when marked Taken.
 
 ### Medication Detail
 
@@ -510,6 +541,7 @@ Covered logic:
 - Course complete detection.
 - Multiple daily reminder times.
 - Hourly interval schedules across midnight.
+- Prescription-style per-time dose amounts and Fixed Course stock requirements.
 
 ## Current Known Limitations
 
@@ -517,6 +549,7 @@ Covered logic:
 - The app does not use exact alarms.
 - There are no instrumented UI tests yet.
 - There is no database migration strategy beyond destructive migration in the MVP.
+- The current schema has been bumped to version 2 to support per-schedule dose amounts.
 - There is no encrypted database layer.
 - Dose history exists, but advanced analytics and charts are not implemented.
 - Refill entry is represented by editing current stock; there is no separate refill transaction history yet.
@@ -528,6 +561,7 @@ Covered logic:
 High-value next steps:
 
 - Add a simple refill flow that records refill history separately from medication edits.
+- Allow custom Morning/Afternoon/Night reminder times from Settings.
 - Add exact alarm support as an optional reminder mode with proper Android permission handling.
 - Add accessibility review with font scale, TalkBack labels, and contrast verification.
 - Add instrumented Compose UI tests for key flows.

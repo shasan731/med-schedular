@@ -176,6 +176,36 @@ class MedicationBusinessLogicTest {
         assertEquals(6.0, dailyUsage, 0.0)
     }
 
+    @Test
+    fun prescriptionPatternDoseAmountsCalculateStockRequirement() {
+        val medication = medication(
+            treatmentType = TreatmentType.FIXED_COURSE,
+            startDate = LocalDate.of(2026, 1, 1),
+            endDate = LocalDate.of(2026, 1, 7),
+            doseAmount = 1.0
+        )
+        val schedules = listOf(
+            MedicationScheduleEntity(
+                medicationId = 1,
+                scheduleType = ScheduleType.SPECIFIC_TIMES,
+                timeOfDay = "08:00",
+                doseAmount = 1.0
+            ),
+            MedicationScheduleEntity(
+                medicationId = 1,
+                scheduleType = ScheduleType.SPECIFIC_TIMES,
+                timeOfDay = "22:00",
+                doseAmount = 1.0
+            )
+        )
+
+        val dailyUsage = InventoryCalculator.calculateDailyUsage(medication, schedules)
+        val required = InventoryCalculator.calculateTotalRequiredStockForFixedCourse(medication, schedules)
+
+        assertEquals(2.0, dailyUsage, 0.0)
+        assertEquals(14.0, required, 0.0)
+    }
+
     private fun medication(
         currentStock: Double = 10.0,
         doseAmount: Double = 1.0,

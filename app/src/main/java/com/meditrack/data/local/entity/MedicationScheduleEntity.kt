@@ -24,6 +24,7 @@ data class MedicationScheduleEntity(
     val medicationId: Long,
     val scheduleType: ScheduleType,
     val timeOfDay: String? = null,
+    val doseAmount: Double? = null,
     val intervalValue: Int? = null,
     val intervalUnit: IntervalUnit? = null,
     val daysOfWeek: String? = null,

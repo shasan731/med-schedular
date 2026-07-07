@@ -32,14 +32,17 @@ object ScheduleCalculator {
 
         return schedules
             .filter { it.isActive }
-            .flatMap { schedule -> timesForDate(medication.startDate, schedule, date) }
-            .distinct()
-            .sorted()
-            .map { time ->
+            .flatMap { schedule ->
+                val doseAmount = schedule.doseAmount?.takeIf { it > 0.0 } ?: medication.doseAmount
+                timesForDate(medication.startDate, schedule, date).map { time -> time to doseAmount }
+            }
+            .distinctBy { it.first }
+            .sortedBy { it.first }
+            .map { (time, doseAmount) ->
                 DoseEventEntity(
                     medicationId = medication.id,
                     scheduledDateTime = LocalDateTime.of(date, time),
-                    doseAmount = medication.doseAmount
+                    doseAmount = doseAmount
                 )
             }
     }
@@ -58,6 +61,22 @@ object ScheduleCalculator {
             date = date.plusDays(1)
         }
         return count
+    }
+
+    fun sumScheduledDoseAmountBetween(
+        medication: MedicationEntity,
+        schedules: List<MedicationScheduleEntity>,
+        startDate: LocalDate,
+        endDateInclusive: LocalDate
+    ): Double {
+        if (endDateInclusive.isBefore(startDate)) return 0.0
+        var total = 0.0
+        var date = startDate
+        while (!date.isAfter(endDateInclusive)) {
+            total += generateDoseEventsForDate(medication, schedules, date).sumOf { it.doseAmount }
+            date = date.plusDays(1)
+        }
+        return total
     }
 
     fun scheduleSummary(schedules: List<MedicationScheduleEntity>): String {
