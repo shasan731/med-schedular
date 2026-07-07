@@ -22,17 +22,23 @@ class DashboardViewModel : ViewModel() {
         repository.observeDoseEventsForDate(today),
         repository.observeActiveMedications()
     ) { doses, medications ->
-        val warnings = medications.mapNotNull { item ->
+        val alerts = medications.mapNotNull { item ->
             val summary = InventoryCalculator.buildSummary(item.medication, item.schedules)
             when {
-                summary.outOfStock -> "${item.medication.name} is out of stock."
-                summary.lowStock -> "Refill soon: ${item.medication.name} has ${summary.daysRemaining.daysRemainingText()} remaining."
+                summary.outOfStock -> StockAlert(
+                    message = "${item.medication.name} is out of stock.",
+                    severity = AlertSeverity.CRITICAL
+                )
+                summary.lowStock -> StockAlert(
+                    message = "Refill soon: ${item.medication.name} has ${summary.daysRemaining.daysRemainingText()} remaining.",
+                    severity = AlertSeverity.WARNING
+                )
                 else -> null
             }
         }
         DashboardUiState(
             todayLabel = today.displayDate(),
-            lowStockWarnings = warnings,
+            stockAlerts = alerts,
             doses = doses
         )
     }.stateIn(
@@ -70,6 +76,16 @@ class DashboardViewModel : ViewModel() {
 
 data class DashboardUiState(
     val todayLabel: String,
-    val lowStockWarnings: List<String> = emptyList(),
+    val stockAlerts: List<StockAlert> = emptyList(),
     val doses: List<DoseEventWithMedication> = emptyList()
 )
+
+data class StockAlert(
+    val message: String,
+    val severity: AlertSeverity
+)
+
+enum class AlertSeverity {
+    WARNING,
+    CRITICAL
+}

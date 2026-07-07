@@ -1,16 +1,23 @@
 package com.meditrack.ui
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -46,43 +53,37 @@ fun MediTrackAppRoot() {
 
     Scaffold(
         bottomBar = {
-            NavigationBar {
-                bottomRoutes.forEach { (route, label) ->
-                    val selected = when (route) {
-                        Routes.AddEdit -> currentRoute.startsWith(Routes.AddEdit)
-                        Routes.Detail -> currentRoute.startsWith(Routes.Detail)
-                        else -> currentRoute == route
-                    }
-                    NavigationBarItem(
-                        selected = selected,
-                        onClick = {
-                            navController.navigate(route) {
-                                launchSingleTop = true
-                                restoreState = true
-                                popUpTo(Routes.Dashboard) { saveState = true }
-                            }
-                        },
-                        icon = {
-                            Text(
-                                text = if (selected) "[x]" else "[ ]",
-                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
-                            )
-                        },
-                        label = {
-                            Text(
-                                text = label,
-                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
-                            )
-                        },
-                        alwaysShowLabel = true,
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.colorScheme.primary,
-                            selectedTextColor = MaterialTheme.colorScheme.primary,
-                            indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.16f),
-                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+            Surface(
+                tonalElevation = 4.dp,
+                shadowElevation = 4.dp,
+                color = MaterialTheme.colorScheme.surface
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 10.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    bottomRoutes.forEach { (route, label) ->
+                        val selected = when (route) {
+                            Routes.AddEdit -> currentRoute.startsWith(Routes.AddEdit)
+                            Routes.Inventory -> currentRoute == Routes.Inventory ||
+                                currentRoute.startsWith(Routes.Detail)
+                            else -> currentRoute == route
+                        }
+                        BottomNavPill(
+                            label = label,
+                            selected = selected,
+                            onClick = {
+                                navController.navigate(route) {
+                                    launchSingleTop = true
+                                    restoreState = true
+                                    popUpTo(Routes.Dashboard) { saveState = true }
+                                }
+                            },
+                            modifier = Modifier.weight(1f)
                         )
-                    )
+                    }
                 }
             }
         }
@@ -137,6 +138,40 @@ fun MediTrackAppRoot() {
             composable(Routes.Settings) {
                 SettingsScreen()
             }
+        }
+    }
+}
+
+@Composable
+private fun BottomNavPill(
+    label: String,
+    selected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    val shape = RoundedCornerShape(14.dp)
+    if (selected) {
+        Button(
+            onClick = onClick,
+            modifier = modifier.height(58.dp),
+            shape = shape,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            )
+        ) {
+            Text(label, fontWeight = FontWeight.Bold)
+        }
+    } else {
+        OutlinedButton(
+            onClick = onClick,
+            modifier = modifier.height(58.dp),
+            shape = shape,
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = MaterialTheme.colorScheme.onSurface
+            )
+        ) {
+            Text(label)
         }
     }
 }

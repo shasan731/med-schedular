@@ -12,8 +12,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -28,9 +30,9 @@ import com.meditrack.domain.model.DoseStatus
 import com.meditrack.ui.components.BasicCard
 import com.meditrack.ui.components.ScreenHeader
 import com.meditrack.ui.components.StatusBadge
-import com.meditrack.ui.components.WarningBand
 import com.meditrack.ui.displayTime
 import com.meditrack.ui.stockText
+import java.time.LocalTime
 
 @Composable
 fun DashboardScreen(
@@ -39,13 +41,13 @@ fun DashboardScreen(
     viewModel: DashboardViewModel = viewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
-    val grouped = state.doses.groupBy { timeCategory(it) }
+    val groups = state.doses.groupIntoTimeCards()
 
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(bottom = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
             ScreenHeader(
@@ -56,11 +58,13 @@ fun DashboardScreen(
             )
         }
 
-        items(state.lowStockWarnings) { warning ->
-            WarningBand(
-                text = warning,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
+        if (state.stockAlerts.isNotEmpty()) {
+            item {
+                AlertSummaryCard(
+                    alerts = state.stockAlerts,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+            }
         }
 
         if (state.doses.isEmpty()) {
@@ -68,26 +72,49 @@ fun DashboardScreen(
                 EmptyTodayState(onAddMedication)
             }
         } else {
-            listOf("Morning", "Afternoon", "Night", "Other").forEach { group ->
-                val doses = grouped[group].orEmpty()
-                if (doses.isNotEmpty()) {
-                    item {
-                        Text(
-                            text = group,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-                    items(doses, key = { it.id }) { dose ->
-                        DoseCard(
-                            dose = dose,
-                            onMedicationClick = { onMedicationClick(dose.medicationId) },
-                            onTaken = { viewModel.markTaken(dose.id) },
-                            onSkip = { viewModel.skip(dose.id) }
-                        )
-                    }
-                }
+            items(groups, key = { it.key }) { group ->
+                DoseTimeCard(
+                    group = group,
+                    onMedicationClick = onMedicationClick,
+                    onTaken = viewModel::markTaken,
+                    onSkip = viewModel::skip
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AlertSummaryCard(
+    alerts: List<StockAlert>,
+    modifier: Modifier = Modifier
+) {
+    val hasCritical = alerts.any { it.severity == AlertSeverity.CRITICAL }
+    val background = if (hasCritical) Color(0xFFFFE4E2) else Color(0xFFFFF3CD)
+    val foreground = if (hasCritical) Color(0xFFB42318) else Color(0xFF6B4E00)
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.medium,
+        color = background,
+        tonalElevation = 2.dp
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = if (hasCritical) "Needs attention now" else "Refill reminders",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = foreground
+            )
+            alerts.forEach { alert ->
+                Text(
+                    text = alert.message,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = foreground
+                )
             }
         }
     }
@@ -107,80 +134,169 @@ private fun EmptyTodayState(onAddMedication: () -> Unit) {
 }
 
 @Composable
-private fun DoseCard(
-    dose: DoseEventWithMedication,
-    onMedicationClick: () -> Unit,
-    onTaken: () -> Unit,
-    onSkip: () -> Unit
+private fun DoseTimeCard(
+    group: DoseTimeGroup,
+    onMedicationClick: (Long) -> Unit,
+    onTaken: (Long) -> Unit,
+    onSkip: (Long) -> Unit
 ) {
-    BasicCard(
-        modifier = Modifier
-            .padding(horizontal = 16.dp)
-            .clickable(onClick = onMedicationClick)
-    ) {
+    BasicCard(modifier = Modifier.padding(horizontal = 16.dp)) {
         Column(
-            modifier = Modifier.padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(dose.medicationName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                    Text(dose.dosageInstruction, style = MaterialTheme.typography.bodyMedium)
-                }
-                Text(dose.scheduledDateTime.displayTime(), fontWeight = FontWeight.SemiBold)
-            }
-
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                StatusBadge(
-                    text = dose.status.label,
-                    color = statusColor(dose.status)
-                )
-                if (dose.currentStock <= dose.doseAmount) {
-                    StatusBadge(text = "Low stock", color = Color(0xFFB42318))
+                    Text(
+                        text = group.title,
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "${group.doses.size} medicine reminder(s)",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.secondary
+                    )
                 }
                 Text(
-                    text = "Stock: ${dose.currentStock.stockText()} ${dose.doseUnit}",
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(top = 5.dp)
+                    text = group.timeLabel,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
                 )
             }
 
-            if (dose.status == DoseStatus.PENDING || dose.status == DoseStatus.MISSED) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+            group.doses.forEachIndexed { index, dose ->
+                if (index > 0) {
+                    HorizontalDivider()
+                }
+                DoseRow(
+                    dose = dose,
+                    onMedicationClick = { onMedicationClick(dose.medicationId) },
+                    onTaken = { onTaken(dose.id) },
+                    onSkip = { onSkip(dose.id) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun DoseRow(
+    dose: DoseEventWithMedication,
+    onMedicationClick: () -> Unit,
+    onTaken: () -> Unit,
+    onSkip: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onMedicationClick)
+            .padding(vertical = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    dose.medicationName,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(dose.dosageInstruction, style = MaterialTheme.typography.bodyMedium)
+            }
+            StatusBadge(
+                text = dose.status.label,
+                color = statusColor(dose.status)
+            )
+        }
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (dose.currentStock <= 0.0) {
+                StatusBadge(text = "Out of stock", color = Color(0xFFB42318))
+            } else if (dose.currentStock <= dose.doseAmount) {
+                StatusBadge(text = "Low stock", color = Color(0xFFB42318))
+            }
+            Text(
+                text = "Take ${dose.doseAmount.stockText()} ${dose.doseUnit} | Stock: ${dose.currentStock.stockText()}",
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(top = 5.dp)
+            )
+        }
+
+        if (dose.status == DoseStatus.PENDING || dose.status == DoseStatus.MISSED) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Button(
+                    onClick = onTaken,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(52.dp)
                 ) {
-                    Button(
-                        onClick = onTaken,
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(52.dp)
-                    ) {
-                        Text("Taken")
-                    }
-                    OutlinedButton(
-                        onClick = onSkip,
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(52.dp)
-                    ) {
-                        Text("Skip")
-                    }
+                    Text("Taken")
+                }
+                OutlinedButton(
+                    onClick = onSkip,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(52.dp)
+                ) {
+                    Text("Skip")
                 }
             }
         }
     }
 }
 
-private fun timeCategory(dose: DoseEventWithMedication): String {
-    return when (dose.scheduledDateTime.hour) {
-        in 5..11 -> "Morning"
-        in 12..16 -> "Afternoon"
-        in 17..22 -> "Night"
-        else -> "Other"
+private data class DoseTimeGroup(
+    val key: String,
+    val title: String,
+    val timeLabel: String,
+    val sortTime: LocalTime,
+    val doses: List<DoseEventWithMedication>
+)
+
+private fun List<DoseEventWithMedication>.groupIntoTimeCards(): List<DoseTimeGroup> {
+    return groupBy { dose -> dose.groupKey() }
+        .map { (key, doses) ->
+            val first = doses.minBy { it.scheduledDateTime }
+            DoseTimeGroup(
+                key = key,
+                title = first.groupTitle(),
+                timeLabel = first.scheduledDateTime.displayTime(),
+                sortTime = first.scheduledDateTime.toLocalTime(),
+                doses = doses.sortedWith(
+                    compareBy<DoseEventWithMedication> { it.scheduledDateTime }
+                        .thenBy { it.medicationName.lowercase() }
+                )
+            )
+        }
+        .sortedBy { it.sortTime }
+}
+
+private fun DoseEventWithMedication.groupKey(): String {
+    val time = scheduledDateTime.toLocalTime()
+    return when (time) {
+        LocalTime.of(8, 0) -> "morning"
+        LocalTime.of(14, 0) -> "afternoon"
+        LocalTime.of(22, 0) -> "night"
+        else -> time.toString()
+    }
+}
+
+private fun DoseEventWithMedication.groupTitle(): String {
+    val time = scheduledDateTime.toLocalTime()
+    return when (time) {
+        LocalTime.of(8, 0) -> "Morning"
+        LocalTime.of(14, 0) -> "Noon / Afternoon"
+        LocalTime.of(22, 0) -> "Night"
+        else -> "Custom time"
     }
 }
 

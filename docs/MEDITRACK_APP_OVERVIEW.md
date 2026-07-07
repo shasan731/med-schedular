@@ -337,7 +337,12 @@ Primary tabs:
 - Add Med
 - Settings
 
-Bottom navigation uses explicit `[x]` and `[ ]` markers plus bold selected labels so the selected tab is easier to see for older users and users with weaker color contrast perception.
+Current bottom navigation uses large pill-style buttons:
+
+- Selected tab: filled primary color with bold text.
+- Unselected tabs: outlined buttons.
+- Labels are always visible.
+- Medication detail screens keep Inventory selected because they are part of the medication inventory flow.
 
 ### Today Screen
 
@@ -351,15 +356,30 @@ ui/dashboard/DashboardViewModel.kt
 Purpose:
 
 - Show today's scheduled dose events.
-- Group doses by Morning, Afternoon, Night, and Other.
-- Show low-stock warnings at the top.
+- Group doses into time cards instead of one card per medication dose.
+- Show high-visibility stock/refill alerts at the top.
 - Let users mark doses Taken or Skip.
 
 UX details:
 
-- Taken and Skip buttons are large and full-width within each card.
+- Morning, Noon/Afternoon, and Night each appear as a single card when they have reminders.
+- Each time card contains all medications due at that time.
+- Custom reminder times appear as their own "Custom time" card with the actual due time.
+- Taken and Skip buttons are large and full-width within each medication row.
+- Alert cards use stronger color backgrounds and headings:
+  - Critical out-of-stock alerts show "Needs attention now".
+  - Refill warnings show "Refill reminders".
 - Warning text uses plain wording like "Refill soon".
 - Empty state prompts the user to add a medication.
+
+Common prescription-time mapping:
+
+```text
+Morning           -> 08:00
+Noon / Afternoon  -> 14:00
+Night             -> 22:00
+Custom time       -> any other configured reminder time
+```
 
 ### Inventory Cabinet
 
