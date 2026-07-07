@@ -7,10 +7,17 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -20,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -105,6 +113,66 @@ fun ConfirmingTextButton(
         Text(if (awaitingConfirmation) confirmingLabel else label)
     }
 }
+
+/**
+ * A large, tap-only quantity control (minus / number / plus). Designed so older users never have to
+ * open a keyboard for the common "how many to take" numbers. The value is carried as a String so it
+ * plugs directly into the existing text-based form state.
+ */
+@Composable
+fun DoseStepperRow(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+    sublabel: String? = null,
+    onValueChange: (String) -> Unit
+) {
+    val current = value.toDoubleOrNull()?.coerceAtLeast(0.0) ?: 0.0
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(label, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            if (sublabel != null) {
+                Text(
+                    sublabel,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+            }
+        }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            FilledTonalIconButton(
+                onClick = { onValueChange(formatQuantity((current - 1).coerceAtLeast(0.0))) },
+                enabled = current > 0.0,
+                modifier = Modifier.size(52.dp)
+            ) {
+                Icon(Icons.Rounded.Remove, contentDescription = "Fewer for $label")
+            }
+            Text(
+                text = formatQuantity(current),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.widthIn(min = 40.dp)
+            )
+            FilledTonalIconButton(
+                onClick = { onValueChange(formatQuantity(current + 1)) },
+                modifier = Modifier.size(52.dp)
+            ) {
+                Icon(Icons.Rounded.Add, contentDescription = "More for $label")
+            }
+        }
+    }
+}
+
+private fun formatQuantity(value: Double): String =
+    if (value % 1.0 == 0.0) value.toInt().toString() else value.toString()
 
 @Composable
 fun BasicCard(

@@ -27,6 +27,9 @@ class AddEditMedicationViewModel(
     private val repository = AppGraph.medicationRepository
     private val settings = AppGraph.settingsRepository
     private val scheduler = AppGraph.reminderScheduler
+    // Tracks the persisted row id. Starts as the edit target (if any) and is updated after the
+    // first successful insert so a follow-up save becomes an update instead of a duplicate insert.
+    private var currentMedicationId: Long? = medicationId
     private val _state = MutableStateFlow(MedicationFormState.default(settings.load().defaultLowStockThresholdDays))
     val state: StateFlow<MedicationFormState> = _state.asStateFlow()
 
@@ -52,6 +55,9 @@ class AddEditMedicationViewModel(
             }
 
             val result = repository.saveMedication(parsed.medication!!, parsed.schedules)
+            // Remember the saved id so re-saving (e.g. after adjusting stock in response to the
+            // purchase warning) updates the same record rather than inserting a duplicate.
+            currentMedicationId = result.medicationId
             scheduler.rescheduleMedicationReminders()
             if (result.insufficientStockForCourse) {
                 _state.value = _state.value.copy(
@@ -88,7 +94,7 @@ class AddEditMedicationViewModel(
         }
 
         val medication = MedicationEntity(
-            id = medicationId ?: 0L,
+            id = currentMedicationId ?: 0L,
             name = normalized.name.trim(),
             dosageInstruction = normalized.dosageInstruction.ifBlank {
                 normalized.generatedInstruction()
@@ -152,7 +158,7 @@ class AddEditMedicationViewModel(
                 null
             } else {
                 MedicationScheduleEntity(
-                    medicationId = medicationId ?: 0L,
+                    medicationId = currentMedicationId ?: 0L,
                     scheduleType = ScheduleType.SPECIFIC_TIMES,
                     timeOfDay = slot.time,
                     doseAmount = dose
@@ -182,7 +188,7 @@ class AddEditMedicationViewModel(
                 ParsedSchedules(
                     schedules = normalized.distinct().map { time ->
                         MedicationScheduleEntity(
-                            medicationId = medicationId ?: 0L,
+                            medicationId = currentMedicationId ?: 0L,
                             scheduleType = ScheduleType.SPECIFIC_TIMES,
                             timeOfDay = time,
                             doseAmount = doseAmount
@@ -222,7 +228,7 @@ class AddEditMedicationViewModel(
                 ParsedSchedules(
                     schedules = listOf(
                         MedicationScheduleEntity(
-                            medicationId = medicationId ?: 0L,
+                            medicationId = currentMedicationId ?: 0L,
                             scheduleType = form.scheduleType,
                             timeOfDay = normalizedTime,
                             doseAmount = doseAmount,

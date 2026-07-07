@@ -3,16 +3,22 @@ package com.meditrack.ui.addedit
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -36,10 +42,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.meditrack.domain.model.ScheduleType
 import com.meditrack.domain.model.TreatmentType
 import com.meditrack.ui.components.BasicCard
+import com.meditrack.ui.components.DoseStepperRow
 import com.meditrack.ui.components.PrimaryActionButton
 import com.meditrack.ui.components.ScreenHeader
 import com.meditrack.ui.components.SecondaryActionButton
 import com.meditrack.ui.components.WarningBand
+import com.meditrack.ui.longDisplayDate
 import com.meditrack.ui.stockText
 import java.time.Instant
 import java.time.LocalDate
@@ -64,8 +72,8 @@ fun AddEditMedicationScreen(
         ) {
             item {
                 ScreenHeader(
-                    title = if (medicationId == null) "Add Medication" else "Edit Medication",
-                    subtitle = "Use the same pattern your doctor writes, such as 1+0+1."
+                    title = if (medicationId == null) "Add Medicine" else "Edit Medicine",
+                    subtitle = "Just answer a few simple questions. You can change anything later."
                 )
             }
             state.errorMessage?.let { message ->
@@ -120,7 +128,7 @@ private fun AddEditBottomActions(
                 modifier = Modifier.weight(1f)
             )
             PrimaryActionButton(
-                text = if (savedWithWarning) "Done" else "Save Medication",
+                text = if (savedWithWarning) "Done" else "Save",
                 onClick = if (savedWithWarning) onDone else onSave,
                 modifier = Modifier.weight(1f)
             )
@@ -138,20 +146,20 @@ private fun MedicineSection(
             modifier = Modifier.padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            SectionTitle("1. Medicine")
+            SectionTitle("1. What is the medicine?")
             FormTextField("Medicine name", state.name) { value ->
                 update { it.copy(name = value) }
             }
             FormTextField(
-                label = "Instruction, for example after meal",
-                value = state.dosageInstruction,
-                supporting = "Optional. If empty, MediTrack creates a simple instruction from the dose pattern."
-            ) { value -> update { it.copy(dosageInstruction = value) } }
-            FormTextField(
-                label = "Medicine unit",
+                label = "What form is it? (tablet, capsule, ml, drop)",
                 value = state.doseUnit,
-                supporting = "Examples: tablet, capsule, ml, drop"
+                supporting = "This is what we count. Most people leave it as tablet."
             ) { value -> update { it.copy(doseUnit = value) } }
+            FormTextField(
+                label = "Special note (optional)",
+                value = state.dosageInstruction,
+                supporting = "For example: after meal. Leave empty if you are not sure."
+            ) { value -> update { it.copy(dosageInstruction = value) } }
         }
     }
 }
@@ -166,17 +174,17 @@ private fun TreatmentSection(
             modifier = Modifier.padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            SectionTitle("2. Treatment length")
+            SectionTitle("2. How long will you take it?")
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TreatmentButton(
-                    label = "Continuous",
+                    label = "Every day, ongoing",
                     selected = state.treatmentType == TreatmentType.CONTINUOUS,
                     modifier = Modifier.weight(1f)
                 ) {
                     update { it.copy(treatmentType = TreatmentType.CONTINUOUS, endDate = "") }
                 }
                 TreatmentButton(
-                    label = "Fixed Course",
+                    label = "For a set number of days",
                     selected = state.treatmentType == TreatmentType.FIXED_COURSE,
                     modifier = Modifier.weight(1f)
                 ) {
@@ -191,7 +199,7 @@ private fun TreatmentSection(
 
             if (state.treatmentType == TreatmentType.FIXED_COURSE) {
                 Text(
-                    "Course length",
+                    "How many days is the course?",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -213,14 +221,20 @@ private fun TreatmentSection(
                         }
                     }
                 }
+                val friendlyEndDate = state.autoEndDate()
+                    ?.let { runCatching { LocalDate.parse(it).longDisplayDate() }.getOrNull() }
                 Text(
-                    text = "End date will be ${state.autoEndDate() ?: "calculated after duration is entered"}.",
+                    text = if (friendlyEndDate != null) {
+                        "Last day: $friendlyEndDate."
+                    } else {
+                        "The last day is worked out once you enter the number of days."
+                    },
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.secondary
                 )
             } else {
                 DateInputField(
-                    label = "End date optional",
+                    label = "End date (optional)",
                     value = state.endDate,
                     modifier = Modifier.fillMaxWidth(),
                     optional = true
@@ -240,16 +254,16 @@ private fun PrescriptionSection(
             modifier = Modifier.padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            SectionTitle("3. Dose schedule")
+            SectionTitle("3. How much and when?")
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Advanced schedule", fontWeight = FontWeight.SemiBold)
+                    Text("Set a custom schedule", fontWeight = FontWeight.SemiBold)
                     Text(
-                        "Use only for hourly, weekly, or monthly plans.",
+                        "Most people can leave this off. Turn it on only for hourly, weekly, or monthly plans.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.secondary
                     )
@@ -274,61 +288,50 @@ private fun SimplePrescriptionFields(
     state: MedicationFormState,
     update: ((MedicationFormState) -> MedicationFormState) -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Text(
-            "Enter the pattern like a prescription. Example: 1+0+1 means Morning 1, Afternoon 0, Night 1.",
+            "How many do you take at each time of day? Tap + or − to set the amount.",
             style = MaterialTheme.typography.bodyMedium
         )
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            NumberTextField(
-                label = "Morning",
-                value = state.morningDose,
-                modifier = Modifier.weight(1f)
-            ) { value -> update { it.copy(morningDose = value) } }
-            NumberTextField(
-                label = "Afternoon",
-                value = state.afternoonDose,
-                modifier = Modifier.weight(1f)
-            ) { value -> update { it.copy(afternoonDose = value) } }
-            NumberTextField(
-                label = "Night",
-                value = state.nightDose,
-                modifier = Modifier.weight(1f)
-            ) { value -> update { it.copy(nightDose = value) } }
-        }
+        DoseStepperRow(
+            label = "Morning",
+            sublabel = "Reminder at 8:00 AM",
+            value = state.morningDose
+        ) { value -> update { it.copy(morningDose = value) } }
+        DoseStepperRow(
+            label = "Afternoon",
+            sublabel = "Reminder at 2:00 PM",
+            value = state.afternoonDose
+        ) { value -> update { it.copy(afternoonDose = value) } }
+        DoseStepperRow(
+            label = "Night",
+            sublabel = "Reminder at 10:00 PM",
+            value = state.nightDose
+        ) { value -> update { it.copy(nightDose = value) } }
+
         Text(
-            text = "Pattern: ${state.prescriptionPattern()}",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
+            "Quick fill",
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.secondary
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedButton(
                 onClick = { update { it.copy(morningDose = "1", afternoonDose = "0", nightDose = "1") } },
                 modifier = Modifier.weight(1f)
             ) {
-                Text("1+0+1")
-            }
-            OutlinedButton(
-                onClick = { update { it.copy(morningDose = "1", afternoonDose = "1", nightDose = "1") } },
-                modifier = Modifier.weight(1f)
-            ) {
-                Text("1+1+1")
+                Text("Morning + night")
             }
             OutlinedButton(
                 onClick = { update { it.copy(morningDose = "0", afternoonDose = "0", nightDose = "1") } },
                 modifier = Modifier.weight(1f)
             ) {
-                Text("0+0+1")
+                Text("Night only")
             }
         }
-        Text(
-            "Reminder times: Morning 8:00 AM, Afternoon 2:00 PM, Night 10:00 PM.",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.secondary
-        )
         state.estimatedSimpleRequiredStock()?.let { required ->
             Text(
-                "Full course needs about ${required.stockText()} ${state.doseUnit.ifBlank { "units" }}.",
+                "You will need about ${required.stockText()} ${state.doseUnit.ifBlank { "units" }} for the whole course.",
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold
             )
@@ -342,8 +345,8 @@ private fun AdvancedScheduleFields(
     update: ((MedicationFormState) -> MedicationFormState) -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        NumberTextField(
-            label = "Dose amount each time",
+        DoseStepperRow(
+            label = "How many each time",
             value = state.doseAmount
         ) { value -> update { it.copy(doseAmount = value) } }
         Text("Schedule type", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
@@ -403,15 +406,16 @@ private fun StockSection(
             modifier = Modifier.padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            SectionTitle("4. Stock and refill reminder")
+            SectionTitle("4. How many do you have?")
             NumberTextField(
-                label = "Current stock",
+                label = "Amount you have now",
                 value = state.currentStock,
-                supporting = "How many ${state.doseUnit.ifBlank { "units" }} you have now."
+                supporting = "The number of ${state.doseUnit.ifBlank { "units" }} in your box or bottle right now."
             ) { value -> update { it.copy(currentStock = value) } }
             NumberTextField(
-                label = "Warn me when stock is this many days left",
-                value = state.lowStockThresholdDays
+                label = "Warn me when about this many days are left",
+                value = state.lowStockThresholdDays,
+                supporting = "We will remind you to refill before you run out."
             ) { value -> update { it.copy(lowStockThresholdDays = value) } }
         }
     }
@@ -450,23 +454,23 @@ private fun DateInputField(
     onValueChange: (String) -> Unit
 ) {
     var showPicker by remember { mutableStateOf(false) }
-    Column(modifier = modifier) {
-        OutlinedTextField(
-            value = value,
-            onValueChange = { },
-            label = { Text(label) },
-            modifier = Modifier.fillMaxWidth(),
-            readOnly = true,
-            singleLine = true
-        )
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedButton(onClick = { showPicker = true }) {
-                Text("Pick date")
-            }
-            if (optional && value.isNotBlank()) {
-                TextButton(onClick = { onValueChange("") }) {
-                    Text("Clear")
-                }
+    val friendlyDate = value.toLocalDateOrNull()?.longDisplayDate()
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(label, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+        OutlinedButton(
+            onClick = { showPicker = true },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(54.dp),
+            shape = RoundedCornerShape(14.dp)
+        ) {
+            Icon(Icons.Rounded.CalendarMonth, contentDescription = null)
+            Spacer(Modifier.width(10.dp))
+            Text(friendlyDate ?: "Tap to choose a date", fontWeight = FontWeight.SemiBold)
+        }
+        if (optional && value.isNotBlank()) {
+            TextButton(onClick = { onValueChange("") }) {
+                Text("Clear date")
             }
         }
     }

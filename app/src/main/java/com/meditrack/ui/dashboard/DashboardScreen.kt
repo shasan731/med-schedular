@@ -18,12 +18,17 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.meditrack.data.local.entity.DoseEventWithMedication
 import com.meditrack.domain.model.DoseStatus
@@ -43,6 +48,19 @@ fun DashboardScreen(
     val state by viewModel.uiState.collectAsState()
     val groups = state.doses.groupIntoTimeCards()
 
+    // Refresh whenever the screen resumes so the timeline rolls over to a new day, overdue doses
+    // become missed, and reminders are rescheduled even if the process was kept alive in the background.
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.refreshToday()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -53,7 +71,7 @@ fun DashboardScreen(
             ScreenHeader(
                 title = "Today",
                 subtitle = state.todayLabel,
-                actionLabel = "Add Medication",
+                actionLabel = "Add medicine",
                 onAction = onAddMedication
             )
         }
@@ -75,6 +93,7 @@ fun DashboardScreen(
             items(groups, key = { it.key }) { group ->
                 DoseTimeCard(
                     group = group,
+                    stockStatus = state.stockStatus,
                     onMedicationClick = onMedicationClick,
                     onTaken = viewModel::markTaken,
                     onSkip = viewModel::skip
@@ -132,11 +151,11 @@ private fun AlertSummaryCard(
 private fun EmptyTodayState(onAddMedication: () -> Unit) {
     BasicCard(modifier = Modifier.padding(16.dp)) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("No medication is scheduled today.", style = MaterialTheme.typography.titleMedium)
+            Text("Nothing to take today.", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(8.dp))
-            Text("Add a medication and schedule reminder times to populate this timeline.")
+            Text("Add a medicine and we will show your reminders here each day.")
             Spacer(Modifier.height(12.dp))
-            Button(onClick = onAddMedication) { Text("Add medication") }
+            Button(onClick = onAddMedication) { Text("Add medicine") }
         }
     }
 }
@@ -144,6 +163,7 @@ private fun EmptyTodayState(onAddMedication: () -> Unit) {
 @Composable
 private fun DoseTimeCard(
     group: DoseTimeGroup,
+    stockStatus: Map<Long, StockStatus>,
     onMedicationClick: (Long) -> Unit,
     onTaken: (Long) -> Unit,
     onSkip: (Long) -> Unit
@@ -155,24 +175,20 @@ private fun DoseTimeCard(
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = group.title,
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "${group.doses.size} medicine reminder(s)",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.secondary
-                    )
-                }
+                Text(
+                    text = group.title,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
+                )
                 Text(
                     text = group.timeLabel,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.secondary
                 )
             }
 
@@ -182,6 +198,7 @@ private fun DoseTimeCard(
                 }
                 DoseRow(
                     dose = dose,
+                    stockStatus = stockStatus[dose.medicationId] ?: StockStatus.OK,
                     onMedicationClick = { onMedicationClick(dose.medicationId) },
                     onTaken = { onTaken(dose.id) },
                     onSkip = { onSkip(dose.id) }
@@ -194,6 +211,7 @@ private fun DoseTimeCard(
 @Composable
 private fun DoseRow(
     dose: DoseEventWithMedication,
+    stockStatus: StockStatus,
     onMedicationClick: () -> Unit,
     onTaken: () -> Unit,
     onSkip: () -> Unit
@@ -207,33 +225,37 @@ private fun DoseRow(
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    dose.medicationName,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Text(dose.dosageInstruction, style = MaterialTheme.typography.bodyMedium)
-            }
-            StatusBadge(
-                text = dose.status.label,
-                color = statusColor(dose.status)
+            Text(
+                dose.medicationName,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.weight(1f)
             )
+            // Only badge doses the user has acted on; "Pending" is the expected default and adds noise.
+            if (dose.status != DoseStatus.PENDING) {
+                StatusBadge(
+                    text = dose.status.label,
+                    color = statusColor(dose.status)
+                )
+            }
         }
 
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (dose.currentStock <= 0.0) {
-                StatusBadge(text = "Out of stock", color = Color(0xFFB42318))
-            } else if (dose.currentStock <= dose.doseAmount) {
-                StatusBadge(text = "Low stock", color = Color(0xFFB42318))
-            }
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Text(
-                text = "Take ${dose.doseAmount.stockText()} ${dose.doseUnit} | Stock: ${dose.currentStock.stockText()}",
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(top = 5.dp)
+                text = "Take ${dose.doseAmount.stockText()} ${dose.doseUnit}",
+                style = MaterialTheme.typography.titleMedium
             )
+            when (stockStatus) {
+                StockStatus.OUT -> StatusBadge(text = "Out of stock", color = Color(0xFFB42318))
+                StockStatus.LOW -> StatusBadge(text = "Low stock", color = Color(0xFFB54708))
+                StockStatus.OK -> Unit
+            }
         }
 
         if (dose.status == DoseStatus.PENDING || dose.status == DoseStatus.MISSED) {

@@ -334,16 +334,16 @@ ui/MediTrackAppRoot.kt
 Primary tabs:
 
 - Today
-- Cabinet
+- Medicines
 - Settings
 
 Current navigation uses a Material 3 app shell:
 
-- A bottom `NavigationBar` is shown on Today, Cabinet, and Settings.
+- A bottom `NavigationBar` is shown on Today, Medicines, and Settings.
 - Each tab uses a recognizable Material icon plus an always-visible label.
 - Selected tabs use a filled indicator, primary text color, and bold label text.
 - Add/Edit and Detail screens hide the bottom bar so the task stays focused.
-- A prominent floating `Add Medicine` button appears on Today and Cabinet.
+- A prominent floating `Add Medicine` button appears on Today and Medicines.
 - Screen changes use short fade and slide transitions through Navigation Compose.
 - Labels are always visible.
 - Medication detail screens keep Inventory selected because they are part of the medication inventory flow.
@@ -376,13 +376,17 @@ UX details:
 - Morning, Noon/Afternoon, and Night each appear as a single card when they have reminders.
 - Each time card contains all medications due at that time.
 - Custom reminder times appear as their own "Custom time" card with the actual due time.
-- Taken and Skip buttons are large and full-width within each medication row.
+- Each medication row is kept minimal: a large medicine name, a single clear line such as "Take 1 tablet", and large full-width Taken/Skip buttons.
+- A status badge is shown only once a dose has been acted on (Taken, Skipped, or Missed); pending doses show no badge to reduce noise.
+- A low-stock or out-of-stock badge appears next to the dose line using the same stock status as the alert cards and the Medicines screen.
 - Alert cards use stronger color backgrounds and headings:
   - Critical out-of-stock alerts show "Needs attention now".
   - Refill warnings show "Refill reminders".
 - Warning text uses plain wording like "Refill soon".
-- Empty state prompts the user to add a medication.
-- The app-level floating action button gives users one stable place to add medicine from Today or Cabinet.
+- Stock and refill alerts are only shown for medications that are active today. A finished Fixed Course or a not-yet-started medication does not raise refill or out-of-stock alerts.
+- The screen refreshes on resume, so the timeline rolls over to the new day, overdue doses become Missed, and reminders reschedule even if the app was left open.
+- Empty state prompts the user to add a medicine.
+- The app-level floating action button gives users one stable place to add medicine from Today or Medicines.
 
 Common prescription-time mapping:
 
@@ -393,7 +397,9 @@ Night             -> 22:00
 Custom time       -> any other configured reminder time
 ```
 
-### Inventory Cabinet
+### Medicines (Inventory)
+
+The Medicines tab (titled "My Medicines" in the app) is the medication inventory.
 
 Files:
 
@@ -430,16 +436,18 @@ Purpose:
 - Add or edit medication records.
 - Capture medicine name, unit, stock, treatment type, course length, prescription pattern, and low-stock threshold.
 
+The screen is written for older and non-technical users: plain-language questions, large tap targets, and as little typing as possible.
+
 UX details:
 
-- The primary flow matches common prescription wording such as `1+0+1`.
-- Morning, Afternoon, and Night are shown as separate dose quantity fields.
-- `1+0+1`, `1+1+1`, and `0+0+1` presets are available.
-- For Fixed Course medication, users enter a course length such as 7 Days, 2 Weeks, or 1 Month.
-- Fixed Course end date is automatically calculated from the start date and course length.
+- Sections read as plain questions: "What is the medicine?", "How long will you take it?", "How much and when?", and "How many do you have?".
+- Treatment length is chosen with two clear buttons: "Every day, ongoing" (Continuous) and "For a set number of days" (Fixed Course).
+- Morning, Afternoon, and Night doses use large tap-only steppers (a minus button, the number, and a plus button) so no keyboard is needed for the common case. Each stepper shows its reminder time as a subtitle.
+- "Quick fill" buttons ("Morning + night", "Night only") set a common pattern in one tap. The underlying schedule still supports any per-time amount such as `1+0+1` or `2+0+1`.
+- Dates are chosen from a single large button that shows a human-readable date, for example "Tue, Jul 7, 2026", backed by a Material date picker.
+- For Fixed Course medication, users enter a course length such as 7 Days, 2 Weeks, or 1 Month, and the last day is calculated and shown in plain language.
 - Estimated full-course stock requirement is shown for simple prescription patterns.
-- Material date pickers are still used for the start date and optional continuous-treatment end date.
-- Advanced schedule is available behind a switch for hourly, daily interval, weekly, or monthly plans.
+- Advanced schedule is available behind a switch for hourly, daily interval, weekly, or monthly plans, and is off by default.
 - Validation errors are shown in plain language.
 
 Validation:

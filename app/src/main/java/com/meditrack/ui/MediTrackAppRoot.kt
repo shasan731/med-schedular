@@ -55,7 +55,7 @@ fun MediTrackAppRoot() {
     val navController = rememberNavController()
     val bottomDestinations = listOf(
         BottomDestination(Routes.Dashboard, "Today", Icons.Rounded.Today),
-        BottomDestination(Routes.Inventory, "Cabinet", Icons.Rounded.Inventory2),
+        BottomDestination(Routes.Inventory, "Medicines", Icons.Rounded.Inventory2),
         BottomDestination(Routes.Settings, "Settings", Icons.Rounded.Settings)
     )
     val backStackEntry by navController.currentBackStackEntryAsState()

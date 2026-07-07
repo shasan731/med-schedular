@@ -51,9 +51,9 @@ fun InventoryScreen(
     ) {
         item {
             ScreenHeader(
-                title = "Inventory Cabinet",
-                subtitle = "${state.items.size} active medication(s)",
-                actionLabel = "Add Medication",
+                title = "My Medicines",
+                subtitle = "${state.items.size} medicine(s)",
+                actionLabel = "Add medicine",
                 onAction = onAddMedication
             )
         }
@@ -62,9 +62,14 @@ fun InventoryScreen(
             item {
                 BasicCard(modifier = Modifier.padding(16.dp)) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text("No active medications.", style = MaterialTheme.typography.titleMedium)
+                        Text("No medicines yet.", style = MaterialTheme.typography.titleMedium)
                         Spacer(Modifier.height(8.dp))
-                        Button(onClick = onAddMedication) { Text("Add medication") }
+                        Text(
+                            "Tap the button to add your first medicine.",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Spacer(Modifier.height(12.dp))
+                        Button(onClick = onAddMedication) { Text("Add medicine") }
                     }
                 }
             }
