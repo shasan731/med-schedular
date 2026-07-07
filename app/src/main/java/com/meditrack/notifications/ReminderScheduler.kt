@@ -5,6 +5,7 @@ import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
+import androidx.work.await
 import com.meditrack.data.repository.MedicationRepository
 import com.meditrack.data.repository.SettingsRepository
 import java.time.Duration
@@ -20,8 +21,9 @@ class ReminderScheduler(
 ) {
     suspend fun rescheduleMedicationReminders() {
         val workManager = WorkManager.getInstance(context)
+        workManager.cancelAllWorkByTag(WORK_TAG).await()
+
         if (!settingsRepository.load().notificationsEnabled) {
-            workManager.cancelAllWorkByTag(WORK_TAG)
             return
         }
 

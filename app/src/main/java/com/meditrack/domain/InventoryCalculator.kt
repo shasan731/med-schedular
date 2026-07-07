@@ -5,7 +5,6 @@ import com.meditrack.data.local.entity.MedicationScheduleEntity
 import com.meditrack.domain.model.ScheduleType
 import com.meditrack.domain.model.TreatmentType
 import java.time.LocalDate
-import java.time.temporal.ChronoUnit
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.max
@@ -33,9 +32,13 @@ object InventoryCalculator {
         if (medication.treatmentType != TreatmentType.FIXED_COURSE || medication.endDate == null) {
             return 0.0
         }
-        val days = ChronoUnit.DAYS.between(medication.startDate, medication.endDate).toInt() + 1
-        if (days <= 0) return 0.0
-        return roundStock(calculateDailyUsage(medication, schedules) * days)
+        val scheduledDoses = ScheduleCalculator.countScheduledDosesBetween(
+            medication = medication,
+            schedules = schedules,
+            startDate = medication.startDate,
+            endDateInclusive = medication.endDate
+        )
+        return roundStock(scheduledDoses * medication.doseAmount)
     }
 
     fun shouldShowLowStockWarning(daysRemaining: Double, thresholdDays: Double): Boolean {

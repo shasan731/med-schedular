@@ -9,8 +9,10 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.YearMonth
+import java.time.Duration
 import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalAdjusters
+import kotlin.math.ceil
 
 object ScheduleCalculator {
     private val defaultDoseTime: LocalTime = LocalTime.of(9, 0)
@@ -40,6 +42,22 @@ object ScheduleCalculator {
                     doseAmount = medication.doseAmount
                 )
             }
+    }
+
+    fun countScheduledDosesBetween(
+        medication: MedicationEntity,
+        schedules: List<MedicationScheduleEntity>,
+        startDate: LocalDate,
+        endDateInclusive: LocalDate
+    ): Int {
+        if (endDateInclusive.isBefore(startDate)) return 0
+        var count = 0
+        var date = startDate
+        while (!date.isAfter(endDateInclusive)) {
+            count += generateDoseEventsForDate(medication, schedules, date).size
+            date = date.plusDays(1)
+        }
+        return count
     }
 
     fun scheduleSummary(schedules: List<MedicationScheduleEntity>): String {
@@ -75,11 +93,7 @@ object ScheduleCalculator {
             ScheduleType.SPECIFIC_TIMES -> listOf(parseTime(schedule.timeOfDay) ?: defaultDoseTime)
             ScheduleType.HOURLY_INTERVAL -> {
                 val first = parseTime(schedule.timeOfDay) ?: LocalTime.MIDNIGHT
-                generateSequence(first) { previous -> previous.plusHours(interval.toLong()) }
-                    .takeWhile { !it.isBefore(first) && it < LocalTime.MAX }
-                    .filter { it.hour % interval == first.hour % interval }
-                    .take(24)
-                    .toList()
+                intervalTimesForDate(startDate, date, first, interval)
             }
             ScheduleType.DAILY_INTERVAL -> {
                 val days = ChronoUnit.DAYS.between(startDate, date)
@@ -143,6 +157,36 @@ object ScheduleCalculator {
         if (suffix == "PM" && hour != 12) hour += 12
         if (suffix == "AM" && hour == 12) hour = 0
         return LocalTime.of(hour, minute).toString()
+    }
+
+    private fun intervalTimesForDate(
+        startDate: LocalDate,
+        date: LocalDate,
+        firstDoseTime: LocalTime,
+        intervalHours: Int
+    ): List<LocalTime> {
+        val intervalMinutes = intervalHours.coerceAtLeast(1) * 60L
+        val anchor = LocalDateTime.of(startDate, firstDoseTime)
+        val dayStart = date.atStartOfDay()
+        val dayEnd = date.plusDays(1).atStartOfDay()
+        if (!dayEnd.isAfter(anchor)) return emptyList()
+
+        val elapsedMinutes = Duration.between(anchor, dayStart).toMinutes()
+        val firstStep = if (elapsedMinutes <= 0L) {
+            0L
+        } else {
+            ceil(elapsedMinutes.toDouble() / intervalMinutes.toDouble()).toLong()
+        }
+
+        val times = mutableListOf<LocalTime>()
+        var occurrence = anchor.plusMinutes(firstStep * intervalMinutes)
+        while (occurrence.isBefore(dayEnd)) {
+            if (!occurrence.isBefore(dayStart)) {
+                times += occurrence.toLocalTime()
+            }
+            occurrence = occurrence.plusMinutes(intervalMinutes)
+        }
+        return times
     }
 
     private fun formatDays(value: String?): String {

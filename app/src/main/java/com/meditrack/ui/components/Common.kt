@@ -80,10 +80,14 @@ fun ConfirmingTextButton(
     label: String,
     confirmingLabel: String,
     awaitingConfirmation: Boolean,
+    modifier: Modifier = Modifier,
     onFirstClick: () -> Unit,
     onConfirm: () -> Unit
 ) {
-    OutlinedButton(onClick = if (awaitingConfirmation) onConfirm else onFirstClick) {
+    OutlinedButton(
+        onClick = if (awaitingConfirmation) onConfirm else onFirstClick,
+        modifier = modifier
+    ) {
         Text(if (awaitingConfirmation) confirmingLabel else label)
     }
 }

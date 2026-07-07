@@ -4,6 +4,7 @@ import com.meditrack.data.local.entity.DoseEventEntity
 import com.meditrack.data.local.entity.MedicationEntity
 import com.meditrack.data.local.entity.MedicationScheduleEntity
 import com.meditrack.domain.model.DoseStatus
+import com.meditrack.domain.model.IntervalUnit
 import com.meditrack.domain.model.ScheduleType
 import com.meditrack.domain.model.TreatmentType
 import org.junit.Assert.assertEquals
@@ -33,6 +34,17 @@ class MedicationBusinessLogicTest {
 
         assertEquals(DoseStatus.SKIPPED, updatedDose.status)
         assertEquals(1.0, updatedDose.doseAmount, 0.0)
+    }
+
+    @Test
+    fun changingTakenDoseToSkippedRestoresStock() {
+        val medication = medication(currentStock = 9.0)
+        val dose = doseEvent(doseAmount = 1.0).copy(status = DoseStatus.TAKEN)
+
+        val (updatedMedication, updatedDose) = DoseStatusManager.markDoseSkipped(medication, dose)
+
+        assertEquals(10.0, updatedMedication.currentStock, 0.0)
+        assertEquals(DoseStatus.SKIPPED, updatedDose.status)
     }
 
     @Test
@@ -70,6 +82,51 @@ class MedicationBusinessLogicTest {
         val required = InventoryCalculator.calculateTotalRequiredStockForFixedCourse(medication, schedules)
 
         assertEquals(10.0, required, 0.0)
+    }
+
+    @Test
+    fun fixedCourseUsesActualDoseDatesForDailyIntervals() {
+        val medication = medication(
+            treatmentType = TreatmentType.FIXED_COURSE,
+            startDate = LocalDate.of(2026, 1, 1),
+            endDate = LocalDate.of(2026, 1, 5),
+            doseAmount = 1.0
+        )
+        val schedules = listOf(
+            MedicationScheduleEntity(
+                medicationId = 1,
+                scheduleType = ScheduleType.DAILY_INTERVAL,
+                timeOfDay = "09:00",
+                intervalValue = 2,
+                intervalUnit = IntervalUnit.DAYS
+            )
+        )
+
+        val required = InventoryCalculator.calculateTotalRequiredStockForFixedCourse(medication, schedules)
+
+        assertEquals(3.0, required, 0.0)
+    }
+
+    @Test
+    fun hourlyIntervalCarriesAcrossMidnight() {
+        val medication = medication(startDate = LocalDate.of(2026, 1, 1))
+        val schedules = listOf(
+            MedicationScheduleEntity(
+                medicationId = 1,
+                scheduleType = ScheduleType.HOURLY_INTERVAL,
+                timeOfDay = "22:00",
+                intervalValue = 8,
+                intervalUnit = IntervalUnit.HOURS
+            )
+        )
+
+        val events = ScheduleCalculator.generateDoseEventsForDate(
+            medication = medication,
+            schedules = schedules,
+            date = LocalDate.of(2026, 1, 2)
+        )
+
+        assertEquals(listOf(6, 14, 22), events.map { it.scheduledDateTime.hour })
     }
 
     @Test

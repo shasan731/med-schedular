@@ -53,7 +53,7 @@ fun InventoryScreen(
             ScreenHeader(
                 title = "Inventory Cabinet",
                 subtitle = "${state.items.size} active medication(s)",
-                actionLabel = "Add",
+                actionLabel = "Add Medication",
                 onAction = onAddMedication
             )
         }
@@ -159,24 +159,42 @@ private fun InventoryCard(
                 }
             }
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = onClick) { Text("Details") }
-                OutlinedButton(onClick = onEdit) { Text("Edit") }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Button(
+                    onClick = onClick,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Details")
+                }
+                OutlinedButton(
+                    onClick = onEdit,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Edit")
+                }
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 ConfirmingTextButton(
                     label = "Disable",
                     confirmingLabel = "Confirm disable",
                     awaitingConfirmation = awaitingDisable,
                     onFirstClick = onDisableFirstClick,
-                    onConfirm = onDisableConfirm
+                    onConfirm = onDisableConfirm,
+                    modifier = Modifier.weight(1f)
                 )
                 ConfirmingTextButton(
                     label = "Delete",
                     confirmingLabel = "Confirm delete",
                     awaitingConfirmation = awaitingDelete,
                     onFirstClick = onDeleteFirstClick,
-                    onConfirm = onDeleteConfirm
+                    onConfirm = onDeleteConfirm,
+                    modifier = Modifier.weight(1f)
                 )
             }
         }

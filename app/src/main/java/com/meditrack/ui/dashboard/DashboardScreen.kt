@@ -51,7 +51,7 @@ fun DashboardScreen(
             ScreenHeader(
                 title = "Today",
                 subtitle = state.todayLabel,
-                actionLabel = "Add",
+                actionLabel = "Add Medication",
                 onAction = onAddMedication
             )
         }
@@ -149,9 +149,26 @@ private fun DoseCard(
             }
 
             if (dose.status == DoseStatus.PENDING || dose.status == DoseStatus.MISSED) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onClick = onTaken) { Text("Mark Taken") }
-                    OutlinedButton(onClick = onSkip) { Text("Skip") }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Button(
+                        onClick = onTaken,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(52.dp)
+                    ) {
+                        Text("Taken")
+                    }
+                    OutlinedButton(
+                        onClick = onSkip,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(52.dp)
+                    ) {
+                        Text("Skip")
+                    }
                 }
             }
         }

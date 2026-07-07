@@ -168,10 +168,29 @@ private fun MedicationFields(
         }
 
         if (state.scheduleType == ScheduleType.SPECIFIC_TIMES) {
+            Text("Quick reminder choices", style = MaterialTheme.typography.titleSmall)
+            OutlinedButton(
+                onClick = { update { it.copy(reminderTimes = "08:00") } },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Morning only")
+            }
+            OutlinedButton(
+                onClick = { update { it.copy(reminderTimes = "22:00") } },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Night only")
+            }
+            Button(
+                onClick = { update { it.copy(reminderTimes = "08:00, 14:00, 22:00") } },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Use Morning, Afternoon, and Night")
+            }
             FormTextField(
                 label = "Specific reminder times",
                 value = state.reminderTimes,
-                supporting = "Comma-separated, e.g. 08:00, 14:00, 10:00 PM"
+                supporting = "You can also type times separated by commas, e.g. 08:00, 2:00 PM, 10:00 PM."
             ) { value -> update { it.copy(reminderTimes = value) } }
         } else {
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {

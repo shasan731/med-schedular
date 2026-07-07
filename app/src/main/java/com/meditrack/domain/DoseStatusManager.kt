@@ -39,6 +39,22 @@ object DoseStatusManager {
         )
     }
 
+    fun markDoseSkipped(
+        medication: MedicationEntity,
+        doseEvent: DoseEventEntity,
+        skippedAt: LocalDateTime = LocalDateTime.now()
+    ): Pair<MedicationEntity, DoseEventEntity> {
+        val restoredStock = if (doseEvent.status == DoseStatus.TAKEN) {
+            medication.currentStock + doseEvent.doseAmount
+        } else {
+            medication.currentStock
+        }
+        return medication.copy(
+            currentStock = restoredStock,
+            updatedAt = skippedAt
+        ) to markDoseSkipped(doseEvent, skippedAt)
+    }
+
     fun markMissedIfPastGracePeriod(
         doseEvent: DoseEventEntity,
         now: LocalDateTime = LocalDateTime.now(),

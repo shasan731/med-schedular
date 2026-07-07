@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.meditrack.AppGraph
 import com.meditrack.data.local.entity.DoseEventWithMedication
 import com.meditrack.domain.InventoryCalculator
+import com.meditrack.ui.daysRemainingText
 import com.meditrack.ui.displayDate
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -25,7 +26,7 @@ class DashboardViewModel : ViewModel() {
             val summary = InventoryCalculator.buildSummary(item.medication, item.schedules)
             when {
                 summary.outOfStock -> "${item.medication.name} is out of stock."
-                summary.lowStock -> "${item.medication.name} has ${summary.daysRemaining.let { if (it < 1.0) "<1" else "%.1f".format(it) }} day(s) remaining."
+                summary.lowStock -> "Refill soon: ${item.medication.name} has ${summary.daysRemaining.daysRemainingText()} remaining."
                 else -> null
             }
         }

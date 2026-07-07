@@ -17,7 +17,6 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.LocalTime
 
 class MedicationRepository(
     private val database: AppDatabase
@@ -77,9 +76,12 @@ class MedicationRepository(
                 id
             } else {
                 val now = LocalDateTime.now()
+                val existing = medicationDao.getMedication(medication.id)
                 medicationDao.updateMedication(
                     medication.copy(
                         totalRequiredStock = totalRequired,
+                        createdAt = existing?.createdAt ?: medication.createdAt,
+                        isActive = existing?.isActive ?: medication.isActive,
                         updatedAt = now
                     )
                 )
@@ -103,7 +105,15 @@ class MedicationRepository(
     }
 
     suspend fun disableMedication(medicationId: Long) {
-        medicationDao.disableMedication(medicationId, LocalDateTime.now())
+        database.withTransaction {
+            val now = LocalDateTime.now()
+            medicationDao.disableMedication(medicationId, now)
+            doseEventDao.deletePendingDoseEventsForMedicationAfter(
+                medicationId = medicationId,
+                cutoff = now,
+                pendingStatus = DoseStatus.PENDING
+            )
+        }
     }
 
     suspend fun deleteMedication(medicationId: Long) {
@@ -183,10 +193,14 @@ class MedicationRepository(
         return database.withTransaction {
             val event = doseEventDao.getDoseEvent(doseEventId)
                 ?: return@withTransaction DoseActionResult.NotFound
-            doseEventDao.updateDoseEvent(DoseStatusManager.markDoseSkipped(event))
+            val medication = medicationDao.getMedication(event.medicationId)
+                ?: return@withTransaction DoseActionResult.NotFound
+            val (updatedMedication, updatedEvent) = DoseStatusManager.markDoseSkipped(medication, event)
+            medicationDao.updateMedication(updatedMedication)
+            doseEventDao.updateDoseEvent(updatedEvent)
             DoseActionResult.Success(
-                currentStock = null,
-                outOfStock = false,
+                currentStock = updatedMedication.currentStock,
+                outOfStock = updatedMedication.currentStock <= 0.0,
                 courseComplete = false
             )
         }
@@ -195,6 +209,7 @@ class MedicationRepository(
     suspend fun getDueDosePayload(doseEventId: Long): DueDosePayload? {
         val event = doseEventDao.getDoseEvent(doseEventId) ?: return null
         val medication = medicationDao.getMedication(event.medicationId) ?: return null
+        if (!medication.isActive) return null
         return DueDosePayload(event, medication)
     }
 

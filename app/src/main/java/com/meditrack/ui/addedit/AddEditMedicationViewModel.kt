@@ -38,7 +38,7 @@ class AddEditMedicationViewModel(
     }
 
     fun update(transform: (MedicationFormState) -> MedicationFormState) {
-        _state.value = transform(_state.value).copy(errorMessage = null)
+        _state.value = transform(_state.value).copy(errorMessage = null, warningMessage = null)
     }
 
     fun save(onSaved: () -> Unit) {
@@ -72,6 +72,9 @@ class AddEditMedicationViewModel(
         if (doseAmount == null) errors += "Dose amount must be a number."
         if (currentStock == null) errors += "Current stock must be a number."
         if (lowStockThreshold == null) errors += "Low stock threshold must be a number."
+        if (startDate != null && endDate != null && endDate.isBefore(startDate)) {
+            errors += "End date must be on or after the start date."
+        }
         if (errors.isNotEmpty() || startDate == null) {
             return ParsedMedication(errors = errors)
         }
@@ -89,7 +92,9 @@ class AddEditMedicationViewModel(
             totalRequiredStock = null,
             lowStockThresholdDays = lowStockThreshold ?: 1.0
         )
-        val schedules = parseSchedules(form)
+        val scheduleParse = parseSchedules(form)
+        val schedules = scheduleParse.schedules
+        errors += scheduleParse.errors
         errors += ValidationUtils.validateMedication(medication, schedules)
         return ParsedMedication(
             medication = medication,
@@ -98,42 +103,71 @@ class AddEditMedicationViewModel(
         )
     }
 
-    private fun parseSchedules(form: MedicationFormState): List<MedicationScheduleEntity> {
+    private fun parseSchedules(form: MedicationFormState): ParsedSchedules {
         return when (form.scheduleType) {
             ScheduleType.SPECIFIC_TIMES -> {
-                form.reminderTimes.split(",")
-                    .mapNotNull { ScheduleCalculator.normalizeTimeInput(it) }
-                    .distinct()
-                    .map { time ->
+                val tokens = form.reminderTimes.split(",")
+                    .map { it.trim() }
+                    .filter { it.isNotBlank() }
+                val normalized = tokens.mapNotNull { ScheduleCalculator.normalizeTimeInput(it) }
+                val invalid = tokens.filter { ScheduleCalculator.normalizeTimeInput(it) == null }
+                ParsedSchedules(
+                    schedules = normalized.distinct().map { time ->
                         MedicationScheduleEntity(
                             medicationId = medicationId ?: 0L,
                             scheduleType = ScheduleType.SPECIFIC_TIMES,
                             timeOfDay = time
                         )
-                    }
+                    },
+                    errors = invalid.map { "Reminder time \"$it\" is not valid. Use a time like 08:00 or 8:00 AM." }
+                )
             }
             ScheduleType.HOURLY_INTERVAL,
             ScheduleType.DAILY_INTERVAL,
             ScheduleType.WEEKLY_INTERVAL,
             ScheduleType.MONTHLY_INTERVAL -> {
                 val interval = form.intervalValue.toIntOrNull()
-                listOf(
-                    MedicationScheduleEntity(
-                        medicationId = medicationId ?: 0L,
-                        scheduleType = form.scheduleType,
-                        timeOfDay = form.reminderTimes.split(",").firstOrNull()
-                            ?.let { ScheduleCalculator.normalizeTimeInput(it) },
-                        intervalValue = interval,
-                        intervalUnit = when (form.scheduleType) {
-                            ScheduleType.HOURLY_INTERVAL -> IntervalUnit.HOURS
-                            ScheduleType.DAILY_INTERVAL -> IntervalUnit.DAYS
-                            ScheduleType.WEEKLY_INTERVAL -> IntervalUnit.WEEKS
-                            ScheduleType.MONTHLY_INTERVAL -> IntervalUnit.MONTHS
-                            ScheduleType.SPECIFIC_TIMES -> null
-                        },
-                        daysOfWeek = form.daysOfWeek.ifBlank { null },
-                        dayOfMonth = form.dayOfMonth.toIntOrNull()
-                    )
+                val errors = mutableListOf<String>()
+                val firstTimeInput = form.reminderTimes.split(",").firstOrNull()?.trim().orEmpty()
+                val normalizedTime = firstTimeInput.takeIf { it.isNotBlank() }
+                    ?.let { ScheduleCalculator.normalizeTimeInput(it) }
+                if (firstTimeInput.isNotBlank() && normalizedTime == null) {
+                    errors += "Reminder time \"$firstTimeInput\" is not valid. Use a time like 09:00 or 9:00 AM."
+                }
+
+                val daysOfWeek = form.daysOfWeek.trim()
+                if (form.scheduleType == ScheduleType.WEEKLY_INTERVAL) {
+                    val parsedDays = com.meditrack.domain.InventoryCalculator.parseDaysOfWeek(daysOfWeek)
+                    val tokens = daysOfWeek.split(",").map { it.trim() }.filter { it.isNotBlank() }
+                    if (tokens.isEmpty() || parsedDays.isEmpty() || parsedDays.size != tokens.size) {
+                        errors += "Weekly schedule days must be 1-7 or names like Mon, Wed, Fri."
+                    }
+                }
+
+                val dayOfMonth = form.dayOfMonth.toIntOrNull()
+                if (form.scheduleType == ScheduleType.MONTHLY_INTERVAL && (dayOfMonth == null || dayOfMonth !in 1..31)) {
+                    errors += "Monthly day must be between 1 and 31."
+                }
+
+                ParsedSchedules(
+                    schedules = listOf(
+                        MedicationScheduleEntity(
+                            medicationId = medicationId ?: 0L,
+                            scheduleType = form.scheduleType,
+                            timeOfDay = normalizedTime,
+                            intervalValue = interval,
+                            intervalUnit = when (form.scheduleType) {
+                                ScheduleType.HOURLY_INTERVAL -> IntervalUnit.HOURS
+                                ScheduleType.DAILY_INTERVAL -> IntervalUnit.DAYS
+                                ScheduleType.WEEKLY_INTERVAL -> IntervalUnit.WEEKS
+                                ScheduleType.MONTHLY_INTERVAL -> IntervalUnit.MONTHS
+                                ScheduleType.SPECIFIC_TIMES -> null
+                            },
+                            daysOfWeek = daysOfWeek.ifBlank { null },
+                            dayOfMonth = dayOfMonth
+                        )
+                    ),
+                    errors = errors
                 )
             }
         }
@@ -231,5 +265,10 @@ data class MedicationFormState(
 private data class ParsedMedication(
     val medication: MedicationEntity? = null,
     val schedules: List<MedicationScheduleEntity> = emptyList(),
+    val errors: List<String> = emptyList()
+)
+
+private data class ParsedSchedules(
+    val schedules: List<MedicationScheduleEntity>,
     val errors: List<String> = emptyList()
 )
