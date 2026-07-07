@@ -15,6 +15,7 @@ import com.meditrack.MainActivity
 import com.meditrack.R
 import com.meditrack.data.repository.DueDosePayload
 
+
 object NotificationHelper {
     const val CHANNEL_DOSE_REMINDERS = "dose_reminders"
     const val ACTION_MARK_TAKEN = "com.meditrack.action.MARK_TAKEN"
@@ -25,10 +26,10 @@ object NotificationHelper {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_DOSE_REMINDERS,
-                "Dose reminders",
+                context.getString(R.string.notif_channel_name),
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
-                description = "Medication dose reminder notifications"
+                description = context.getString(R.string.notif_channel_desc)
                 enableVibration(true)
             }
             context.getSystemService(NotificationManager::class.java)
@@ -65,14 +66,14 @@ object NotificationHelper {
 
         val builder = NotificationCompat.Builder(context, CHANNEL_DOSE_REMINDERS)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle("Medication due: ${payload.medication.name}")
+            .setContentTitle(context.getString(R.string.notif_title, payload.medication.name))
             .setContentText(payload.medication.dosageInstruction)
             .setStyle(NotificationCompat.BigTextStyle().bigText(payload.medication.dosageInstruction))
             .setContentIntent(contentIntent)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
-            .addAction(0, "Mark Taken", takenIntent)
-            .addAction(0, "Skip", skipIntent)
+            .addAction(0, context.getString(R.string.notif_action_taken), takenIntent)
+            .addAction(0, context.getString(R.string.notif_action_skip), skipIntent)
 
         if (!vibrationEnabled) {
             builder.setVibrate(null)

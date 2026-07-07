@@ -26,15 +26,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.meditrack.R
 import com.meditrack.data.repository.ThemeMode
 import com.meditrack.ui.components.BasicCard
 import com.meditrack.ui.components.ConfirmingTextButton
 import com.meditrack.ui.components.ScreenHeader
 import com.meditrack.ui.components.WarningBand
+import com.meditrack.ui.labelRes
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -63,9 +68,14 @@ fun SettingsScreen(
                 output.write(json.toByteArray(Charsets.UTF_8))
             } ?: error("Unable to open the selected file.")
         }.onSuccess {
-            viewModel.setMessage("Local data exported to the selected JSON file.")
+            viewModel.setMessage(context.getString(R.string.msg_export_saved))
         }.onFailure { error ->
-            viewModel.setMessage("Export failed: ${error.message ?: "unknown error"}")
+            viewModel.setMessage(
+                context.getString(
+                    R.string.msg_export_failed,
+                    error.message ?: context.getString(R.string.msg_export_unknown_error)
+                )
+            )
         }
         pendingFileExport = false
     }
@@ -87,8 +97,8 @@ fun SettingsScreen(
     ) {
         item {
             ScreenHeader(
-                title = "Settings",
-                subtitle = "Local-only preferences"
+                title = stringResource(R.string.settings_title),
+                subtitle = stringResource(R.string.settings_subtitle)
             )
         }
         message?.let {
@@ -100,9 +110,20 @@ fun SettingsScreen(
                     modifier = Modifier.padding(14.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text("Defaults", style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.settings_language), style = MaterialTheme.typography.titleMedium)
+                    LanguageSelector()
+                }
+            }
+        }
+        item {
+            BasicCard(modifier = Modifier.padding(horizontal = 16.dp)) {
+                Column(
+                    modifier = Modifier.padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(stringResource(R.string.settings_defaults), style = MaterialTheme.typography.titleMedium)
                     Text(
-                        "Choose a comfortable app appearance and default refill warning.",
+                        stringResource(R.string.settings_defaults_help),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -117,13 +138,13 @@ fun SettingsScreen(
                         OutlinedTextField(
                             value = threshold,
                             onValueChange = { threshold = it },
-                            label = { Text("Default low-stock threshold days") },
+                            label = { Text(stringResource(R.string.settings_low_stock_label)) },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                             modifier = Modifier.weight(1f),
                             singleLine = true
                         )
                         Button(onClick = { viewModel.saveLowStockThreshold(threshold) }) {
-                            Text("Save")
+                            Text(stringResource(R.string.action_save))
                         }
                     }
                 }
@@ -135,14 +156,14 @@ fun SettingsScreen(
                     modifier = Modifier.padding(14.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text("Notifications", style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.settings_notifications), style = MaterialTheme.typography.titleMedium)
                     SettingSwitchRow(
-                        label = "Dose reminders enabled",
+                        label = stringResource(R.string.settings_reminders_enabled),
                         checked = settings.notificationsEnabled,
                         onCheckedChange = viewModel::setNotificationsEnabled
                     )
                     SettingSwitchRow(
-                        label = "Vibration enabled",
+                        label = stringResource(R.string.settings_vibration_enabled),
                         checked = settings.vibrationEnabled,
                         onCheckedChange = viewModel::setVibrationEnabled
                     )
@@ -155,7 +176,7 @@ fun SettingsScreen(
                     modifier = Modifier.padding(14.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text("Local data", style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.settings_local_data), style = MaterialTheme.typography.titleMedium)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Button(
                             onClick = {
@@ -163,11 +184,11 @@ fun SettingsScreen(
                                 viewModel.exportJson()
                             }
                         ) {
-                            Text("Export JSON")
+                            Text(stringResource(R.string.settings_export))
                         }
                         ConfirmingTextButton(
-                            label = "Clear all data",
-                            confirmingLabel = "Confirm clear",
+                            label = stringResource(R.string.settings_clear),
+                            confirmingLabel = stringResource(R.string.settings_clear_confirm),
                             awaitingConfirmation = confirmingClear,
                             onFirstClick = { confirmingClear = true },
                             onConfirm = {
@@ -180,7 +201,7 @@ fun SettingsScreen(
                         OutlinedTextField(
                             value = it,
                             onValueChange = { },
-                            label = { Text("Exported JSON") },
+                            label = { Text(stringResource(R.string.settings_exported_json)) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(top = 4.dp),
@@ -202,7 +223,7 @@ private fun ThemeModeSelector(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
-            text = "Theme",
+            text = stringResource(R.string.settings_theme),
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.SemiBold
         )
@@ -217,18 +238,62 @@ private fun ThemeModeSelector(
                         onClick = { onSelected(mode) },
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text(mode.label)
+                        Text(stringResource(mode.labelRes()))
                     }
                 } else {
                     OutlinedButton(
                         onClick = { onSelected(mode) },
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text(mode.label)
+                        Text(stringResource(mode.labelRes()))
                     }
                 }
             }
         }
+    }
+}
+
+/**
+ * English / Bengali toggle. Uses AndroidX per-app locales, which persist the choice and recreate
+ * the activity so the whole app immediately switches language.
+ */
+@Composable
+private fun LanguageSelector() {
+    val currentTags = AppCompatDelegate.getApplicationLocales().toLanguageTags()
+    val isBengali = currentTags.startsWith("bn")
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        LanguageButton(
+            label = stringResource(R.string.lang_english),
+            selected = !isBengali,
+            modifier = Modifier.weight(1f)
+        ) {
+            AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags("en"))
+        }
+        LanguageButton(
+            label = stringResource(R.string.lang_bengali),
+            selected = isBengali,
+            modifier = Modifier.weight(1f)
+        ) {
+            AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags("bn"))
+        }
+    }
+}
+
+@Composable
+private fun LanguageButton(
+    label: String,
+    selected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    if (selected) {
+        Button(onClick = onClick, modifier = modifier) { Text(label) }
+    } else {
+        OutlinedButton(onClick = onClick, modifier = modifier) { Text(label) }
     }
 }
 

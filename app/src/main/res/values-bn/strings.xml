@@ -1,0 +1,181 @@
+<resources>
+    <string name="app_name">MediTrack</string>
+
+    <!-- Navigation / common actions -->
+    <string name="tab_today">আজ</string>
+    <string name="tab_medicines">ওষুধ</string>
+    <string name="tab_settings">সেটিংস</string>
+    <string name="action_add_medicine">ওষুধ যোগ করুন</string>
+    <string name="action_add_medicine_short">ওষুধ যোগ করুন</string>
+    <string name="action_cancel">বাতিল</string>
+    <string name="action_ok">ঠিক আছে</string>
+    <string name="action_save">সংরক্ষণ</string>
+    <string name="action_done">সম্পন্ন</string>
+    <string name="action_edit">সম্পাদনা</string>
+    <string name="action_refill">রিফিল</string>
+    <string name="action_back">পেছনে</string>
+    <string name="action_taken">খেয়েছি</string>
+    <string name="action_skip">বাদ দিন</string>
+    <string name="stepper_decrease">%1$s কমান</string>
+    <string name="stepper_increase">%1$s বাড়ান</string>
+
+    <!-- Days remaining -->
+    <string name="days_no_usage">কোনো নির্ধারিত ব্যবহার নেই</string>
+    <string name="days_zero">০ দিন</string>
+    <string name="days_less_than_one">১ দিনের কম</string>
+    <string name="days_one">%1$s দিন</string>
+    <string name="days_many">%1$s দিন</string>
+
+    <!-- Stock badges -->
+    <string name="badge_out_of_stock">স্টক শেষ</string>
+    <string name="badge_low_stock">স্টক কম</string>
+    <string name="badge_course_complete">কোর্স সম্পূর্ণ</string>
+
+    <!-- Today -->
+    <string name="today_title">আজ</string>
+    <string name="alert_needs_attention">এখনই মনোযোগ প্রয়োজন</string>
+    <string name="alert_refill_reminders">রিফিল অনুস্মারক</string>
+    <string name="today_empty_title">আজ খাওয়ার কিছু নেই।</string>
+    <string name="today_empty_body">একটি ওষুধ যোগ করুন, আমরা প্রতিদিন এখানে আপনার অনুস্মারক দেখাব।</string>
+    <string name="dose_take_amount">%1$s %2$s নিন</string>
+    <string name="alert_out_of_stock">%1$s এর স্টক শেষ।</string>
+    <string name="alert_refill_soon">শীঘ্রই রিফিল করুন: %1$s এর %2$s বাকি আছে।</string>
+    <string name="group_morning">সকাল</string>
+    <string name="group_afternoon">দুপুর</string>
+    <string name="group_night">রাত</string>
+    <string name="group_custom">নির্দিষ্ট সময়</string>
+
+    <!-- Medicines (inventory) -->
+    <string name="medicines_title">আমার ওষুধ</string>
+    <string name="medicines_count">%1$d টি ওষুধ</string>
+    <string name="medicines_empty_title">এখনও কোনো ওষুধ নেই।</string>
+    <string name="medicines_empty_body">আপনার প্রথম ওষুধ যোগ করতে বোতামে চাপ দিন।</string>
+    <string name="open_details">বিস্তারিত দেখুন</string>
+    <string name="fixed_course_summary">প্রয়োজন: %1$s %2$s; বাকি ডোজ: %3$d</string>
+    <string name="purchase_warning">কেনার সতর্কতা: স্টক সম্পূর্ণ কোর্সের প্রয়োজনের চেয়ে কম।</string>
+    <string name="action_disable">নিষ্ক্রিয় করুন</string>
+    <string name="action_disable_confirm">নিশ্চিত করুন</string>
+    <string name="action_delete">মুছুন</string>
+    <string name="action_delete_confirm">মোছা নিশ্চিত করুন</string>
+
+    <!-- Refill dialog -->
+    <string name="refill_title">%1$s রিফিল করুন</string>
+    <string name="refill_prompt">আপনি স্টকে কতটি %1$s যোগ করেছেন?</string>
+    <string name="refill_add">স্টকে যোগ করুন</string>
+
+    <!-- Add / edit medicine -->
+    <string name="add_title">ওষুধ যোগ করুন</string>
+    <string name="edit_title">ওষুধ সম্পাদনা করুন</string>
+    <string name="add_subtitle">শুধু কয়েকটি সহজ প্রশ্নের উত্তর দিন। আপনি পরে যেকোনো কিছু পরিবর্তন করতে পারবেন।</string>
+    <string name="section_medicine">১. ওষুধটি কী?</string>
+    <string name="field_medicine_name">ওষুধের নাম</string>
+    <string name="field_form">এটি কোন ধরনের? (ট্যাবলেট, ক্যাপসুল, মিলি, ড্রপ)</string>
+    <string name="field_form_help">আমরা এটিই গণনা করি। বেশিরভাগ মানুষ ট্যাবলেট রাখেন।</string>
+    <string name="field_note">বিশেষ নোট (ঐচ্ছিক)</string>
+    <string name="field_note_help">যেমন: খাবারের পরে। নিশ্চিত না হলে খালি রাখুন।</string>
+    <string name="section_duration">২. কতদিন খাবেন?</string>
+    <string name="treatment_continuous">প্রতিদিন, চলমান</string>
+    <string name="treatment_fixed">নির্দিষ্ট সংখ্যক দিনের জন্য</string>
+    <string name="field_start_date">শুরুর তারিখ</string>
+    <string name="field_end_date_optional">শেষ তারিখ (ঐচ্ছিক)</string>
+    <string name="course_length_q">কোর্সটি কত দিনের?</string>
+    <string name="field_how_many">কতগুলো</string>
+    <string name="course_last_day">শেষ দিন: %1$s।</string>
+    <string name="course_last_day_pending">দিনের সংখ্যা লিখলে শেষ দিন নির্ধারণ করা হবে।</string>
+    <string name="section_schedule">৩. কতটুকু এবং কখন?</string>
+    <string name="advanced_toggle_title">কাস্টম সময়সূচী সেট করুন</string>
+    <string name="advanced_toggle_help">বেশিরভাগ মানুষ এটি বন্ধ রাখতে পারেন। শুধু ঘণ্টা, সাপ্তাহিক বা মাসিক পরিকল্পনার জন্য চালু করুন।</string>
+    <string name="simple_help">প্রতিটি সময়ে আপনি কতটি নেন? পরিমাণ ঠিক করতে + বা − চাপ দিন।</string>
+    <string name="sub_morning">অনুস্মারক সকাল ৮:০০ টায়</string>
+    <string name="sub_afternoon">অনুস্মারক দুপুর ২:০০ টায়</string>
+    <string name="sub_night">অনুস্মারক রাত ১০:০০ টায়</string>
+    <string name="quick_fill">দ্রুত পূরণ</string>
+    <string name="preset_morning_night">সকাল + রাত</string>
+    <string name="preset_night_only">শুধু রাত</string>
+    <string name="course_needs">সম্পূর্ণ কোর্সের জন্য আপনার প্রায় %1$s %2$s প্রয়োজন হবে।</string>
+    <string name="units_fallback">একক</string>
+    <string name="adv_dose_each">প্রতিবার কতটি</string>
+    <string name="adv_schedule_type">সময়সূচীর ধরন</string>
+    <string name="adv_reminder_times">অনুস্মারকের সময়</string>
+    <string name="adv_reminder_times_help">কমা দিয়ে সময় আলাদা করুন, যেমন 08:00, 2:00 PM, 10:00 PM।</string>
+    <string name="adv_every">প্রতি</string>
+    <string name="adv_reminder_time">অনুস্মারকের সময়</string>
+    <string name="adv_days_of_week">সপ্তাহের দিন</string>
+    <string name="adv_days_of_week_help">১=সোম থেকে ৭=রবি, কমা দিয়ে আলাদা।</string>
+    <string name="adv_day_of_month">মাসের দিন</string>
+    <string name="section_stock">৪. আপনার কাছে কতগুলো আছে?</string>
+    <string name="field_current_stock">এখন আপনার কাছে যত আছে</string>
+    <string name="field_current_stock_help">এই মুহূর্তে আপনার বাক্স বা বোতলে কতটি %1$s আছে।</string>
+    <string name="field_low_stock">প্রায় কত দিন বাকি থাকলে আমাকে সতর্ক করবেন</string>
+    <string name="field_low_stock_help">শেষ হওয়ার আগে আমরা আপনাকে রিফিল করার কথা মনে করিয়ে দেব।</string>
+    <string name="date_choose">তারিখ বাছতে চাপ দিন</string>
+    <string name="clear_date">তারিখ মুছুন</string>
+    <string name="save_purchase_warning">সংরক্ষিত হয়েছে। কেনার সতর্কতা: সম্পূর্ণ কোর্সের জন্য আপনার %1$s %2$s প্রয়োজন।</string>
+
+    <!-- Detail -->
+    <string name="detail_default_title">ওষুধ</string>
+    <string name="detail_not_found">ওষুধ পাওয়া যায়নি।</string>
+    <string name="detail_stock">স্টক: %1$s %2$s</string>
+    <string name="detail_days_remaining">বাকি দিন: %1$s</string>
+    <string name="detail_unknown">অজানা</string>
+    <string name="detail_treatment">চিকিৎসা: %1$s</string>
+    <string name="detail_schedule">সময়সূচী: %1$s</string>
+    <string name="detail_required_stock">প্রয়োজনীয় স্টক: %1$s %2$s</string>
+    <string name="detail_remaining_doses">বাকি ডোজ: %1$d</string>
+    <string name="detail_purchase_warning">কেনার সতর্কতা: স্টক সম্পূর্ণ কোর্সের প্রয়োজনের চেয়ে কম।</string>
+    <string name="action_refill_stock">স্টক রিফিল করুন</string>
+    <string name="dose_history">ডোজের ইতিহাস</string>
+    <string name="no_dose_history">এখনও কোনো ডোজের ইতিহাস নেই।</string>
+
+    <!-- Settings -->
+    <string name="settings_title">সেটিংস</string>
+    <string name="settings_subtitle">শুধু এই ডিভাইসের পছন্দসমূহ</string>
+    <string name="settings_defaults">ডিফল্ট</string>
+    <string name="settings_defaults_help">একটি আরামদায়ক চেহারা এবং ডিফল্ট রিফিল সতর্কতা বেছে নিন।</string>
+    <string name="settings_theme">থিম</string>
+    <string name="theme_system">সিস্টেম</string>
+    <string name="theme_light">উজ্জ্বল</string>
+    <string name="theme_dark">অন্ধকার</string>
+    <string name="settings_language">ভাষা</string>
+    <string name="lang_english">English</string>
+    <string name="lang_bengali">বাংলা</string>
+    <string name="settings_low_stock_label">ডিফল্ট স্টক-কম সতর্কতার দিন</string>
+    <string name="settings_notifications">নোটিফিকেশন</string>
+    <string name="settings_reminders_enabled">ডোজ অনুস্মারক চালু</string>
+    <string name="settings_vibration_enabled">কম্পন চালু</string>
+    <string name="settings_local_data">স্থানীয় ডেটা</string>
+    <string name="settings_export">JSON রপ্তানি</string>
+    <string name="settings_clear">সব ডেটা মুছুন</string>
+    <string name="settings_clear_confirm">মোছা নিশ্চিত করুন</string>
+    <string name="settings_exported_json">রপ্তানিকৃত JSON</string>
+    <string name="msg_low_stock_saved">ডিফল্ট স্টক-কম সতর্কতা সংরক্ষিত হয়েছে।</string>
+    <string name="msg_low_stock_invalid">স্টক-কম সীমা ০ বা তার বেশি হতে হবে।</string>
+    <string name="msg_export_generated">স্থানীয় ডেটা রপ্তানি নিচে তৈরি হয়েছে।</string>
+    <string name="msg_export_saved">স্থানীয় ডেটা নির্বাচিত JSON ফাইলে রপ্তানি হয়েছে।</string>
+    <string name="msg_export_failed">রপ্তানি ব্যর্থ: %1$s</string>
+    <string name="msg_export_unknown_error">অজানা ত্রুটি</string>
+    <string name="msg_cleared">সমস্ত স্থানীয় ওষুধের ডেটা মুছে ফেলা হয়েছে।</string>
+
+    <!-- Notifications -->
+    <string name="notif_channel_name">ডোজ অনুস্মারক</string>
+    <string name="notif_channel_desc">ওষুধের ডোজ অনুস্মারক নোটিফিকেশন</string>
+    <string name="notif_title">ওষুধের সময়: %1$s</string>
+    <string name="notif_action_taken">খেয়েছি চিহ্নিত করুন</string>
+    <string name="notif_action_skip">বাদ দিন</string>
+
+    <!-- Enum labels -->
+    <string name="status_pending">অপেক্ষমাণ</string>
+    <string name="status_taken">খাওয়া হয়েছে</string>
+    <string name="status_skipped">বাদ দেওয়া</string>
+    <string name="status_missed">মিস হয়েছে</string>
+    <string name="sched_specific">নির্দিষ্ট সময়</string>
+    <string name="sched_hourly">ঘণ্টাভিত্তিক ব্যবধান</string>
+    <string name="sched_daily">দৈনিক ব্যবধান</string>
+    <string name="sched_weekly">সাপ্তাহিক ব্যবধান</string>
+    <string name="sched_monthly">মাসিক ব্যবধান</string>
+    <string name="treatment_continuous_label">চলমান</string>
+    <string name="treatment_fixed_label">নির্দিষ্ট কোর্স</string>
+    <string name="unit_days">দিন</string>
+    <string name="unit_weeks">সপ্তাহ</string>
+    <string name="unit_months">মাস</string>
+</resources>

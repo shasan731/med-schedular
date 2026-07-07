@@ -20,9 +20,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.meditrack.R
 import androidx.navigation.NavDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -54,9 +56,9 @@ private data class BottomDestination(
 fun MediTrackAppRoot() {
     val navController = rememberNavController()
     val bottomDestinations = listOf(
-        BottomDestination(Routes.Dashboard, "Today", Icons.Rounded.Today),
-        BottomDestination(Routes.Inventory, "Medicines", Icons.Rounded.Inventory2),
-        BottomDestination(Routes.Settings, "Settings", Icons.Rounded.Settings)
+        BottomDestination(Routes.Dashboard, stringResource(R.string.tab_today), Icons.Rounded.Today),
+        BottomDestination(Routes.Inventory, stringResource(R.string.tab_medicines), Icons.Rounded.Inventory2),
+        BottomDestination(Routes.Settings, stringResource(R.string.tab_settings), Icons.Rounded.Settings)
     )
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
@@ -113,7 +115,7 @@ fun MediTrackAppRoot() {
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary
                 ) {
-                    Text("Add Medicine", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.action_add_medicine), fontWeight = FontWeight.Bold)
                 }
             }
         }

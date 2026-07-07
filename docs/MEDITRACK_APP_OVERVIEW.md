@@ -33,6 +33,7 @@ The app is a working Android MVP built with:
 - SharedPreferences for simple local settings
 - GitHub Actions for debug APK builds
 - Material 3 light, dark, and system theme modes
+- English and Bengali language support, switchable in Settings (AndroidX per-app locales)
 
 The app currently builds successfully as a debug APK and has JVM unit tests for core medication business logic.
 
@@ -301,8 +302,9 @@ Main files:
 
 ```text
 notifications/NotificationHelper.kt
-notifications/ReminderWorker.kt
 notifications/ReminderScheduler.kt
+notifications/ReminderReceiver.kt
+notifications/ReminderWorker.kt
 notifications/NotificationActionReceiver.kt
 notifications/RescheduleReceiver.kt
 ```
@@ -310,19 +312,27 @@ notifications/RescheduleReceiver.kt
 How reminders work:
 
 1. The app generates upcoming dose events for the next 7 days.
-2. `ReminderScheduler` cancels existing reminder work and schedules fresh one-time WorkManager jobs.
-3. `ReminderWorker` runs when a dose is due.
-4. The worker checks settings and current dose status.
+2. `ReminderScheduler` cancels the alarms it armed last time and schedules a fresh exact alarm for each pending dose event using `AlarmManager` (`setExactAndAllowWhileIdle`). The set of armed dose-event ids is persisted so it can be cancelled cleanly on the next reschedule.
+3. When a dose is due, the alarm fires `ReminderReceiver`.
+4. The receiver checks settings and current dose status.
 5. If notifications are enabled and the dose is still pending, a local notification is shown.
 6. Notification actions allow the user to mark the dose Taken or Skip directly.
 7. Notification action receiver updates Room data through the repository and then reschedules reminders.
 
-Android 13+ notification permission is requested in `MainActivity`.
+Exact alarms fire on time even in Doze / battery-saver. If the user has revoked the exact-alarm permission (possible on Android 12), the scheduler falls back to `setAndAllowWhileIdle`, which still fires but not exactly on time.
+
+`ReminderWorker` is now a once-a-day periodic WorkManager job that refreshes the dose-event horizon and re-arms the alarms, so reminders keep working even if the app is not opened for a long time or the OS clears alarms.
+
+Permissions:
+
+- Android 13+ notification permission is requested in `MainActivity`.
+- `USE_EXACT_ALARM` is declared for Android 13+ (auto-granted for alarm/reminder apps), and `SCHEDULE_EXACT_ALARM` is declared for Android 12 (`maxSdkVersion="32"`).
 
 Limitations:
 
-- WorkManager is reliable for deferrable background work, but Android may delay execution. This MVP does not use exact alarms.
-- Reminder work is scheduled for the upcoming 7-day window and refreshed on app start, notification action, medication changes, boot, and package replacement.
+- Reminders are armed for the upcoming 7-day window and refreshed on app start, resume, notification action, medication changes, boot, package replacement, and the daily periodic job.
+- Exact alarms are reliable but aggressive OEM battery managers can still kill background apps; disabling battery optimization for MediTrack is recommended for best reliability.
+- Distributing through Google Play with `USE_EXACT_ALARM` requires the app to qualify as an alarm/reminder app (medication reminders qualify).
 
 ## UI and UX
 
@@ -507,6 +517,7 @@ ui/settings/SettingsViewModel.kt
 
 Purpose:
 
+- Choose the app language: English or Bengali.
 - Choose the app theme: System, Light, or Dark.
 - Configure default low-stock threshold.
 - Toggle notifications.
@@ -516,9 +527,16 @@ Purpose:
 
 UX details:
 
-- Theme choices are shown as three large segmented-style buttons.
-- The selected theme is filled; unselected choices are outlined.
+- Language and theme choices are shown as large segmented-style buttons.
+- The selected option is filled; unselected choices are outlined.
 - Settings messages and warnings use readable Material alert surfaces.
+
+Localization:
+
+- The app ships English (`res/values/strings.xml`) and Bengali (`res/values-bn/strings.xml`) string resources.
+- Language switching uses AndroidX per-app locales via `AppCompatDelegate.setApplicationLocales`. The choice is persisted (by AppCompat on Android 12 and below, by the system on Android 13+) and applied app-wide; changing it recreates the activity so the UI reloads in the new language.
+- Enum labels map to string resources in `ui/Labels.kt` so the domain enums stay resource-free and unit-testable.
+- Known gaps: validation error messages (`ValidationUtils`) and the schedule summary (`ScheduleCalculator`) are still English, and on Android 12 and below a few view-model-generated strings may only fully switch after the app restarts.
 
 Export behavior:
 
@@ -596,14 +614,13 @@ Covered logic:
 
 ## Current Known Limitations
 
-- WorkManager reminders may be delayed by Android battery and background execution rules.
-- The app does not use exact alarms.
+- Dose reminders use exact alarms and fire on time, but aggressive OEM battery managers can still delay or kill background apps; disabling battery optimization is recommended.
 - There are no instrumented UI tests yet.
 - There is no database migration strategy beyond destructive migration in the MVP.
 - The current schema has been bumped to version 2 to support per-schedule dose amounts.
 - There is no encrypted database layer.
 - Dose history exists, but advanced analytics and charts are not implemented.
-- Refill entry is represented by editing current stock; there is no separate refill transaction history yet.
+- A basic refill (add to current stock) exists on the Medicines and Detail screens; there is no separate refill transaction history yet.
 - There is no multi-user support.
 - There is no cloud sync by design.
 
@@ -613,7 +630,7 @@ High-value next steps:
 
 - Extend the refill flow to record refill history separately (a basic refill that adds to current stock already exists on the Medicines and Detail screens).
 - Allow custom Morning/Afternoon/Night reminder times from Settings.
-- Add exact alarm support as an optional reminder mode with proper Android permission handling.
+- Add an in-app prompt to allow exact alarms (Android 12) and to disable battery optimization for best reliability (exact alarms are already the default reminder mechanism).
 - Add accessibility review with font scale, TalkBack labels, and contrast verification.
 - Add instrumented Compose UI tests for key flows.
 - Add Room migrations before releasing beyond MVP.
@@ -637,6 +654,7 @@ domain/ScheduleCalculator.kt
 domain/InventoryCalculator.kt
 domain/DoseStatusManager.kt
 notifications/ReminderScheduler.kt
+notifications/ReminderReceiver.kt
 notifications/ReminderWorker.kt
 notifications/NotificationActionReceiver.kt
 ui/MediTrackAppRoot.kt

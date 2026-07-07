@@ -26,17 +26,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.annotation.StringRes
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.meditrack.R
 import com.meditrack.data.local.entity.DoseEventWithMedication
 import com.meditrack.domain.model.DoseStatus
 import com.meditrack.ui.components.BasicCard
 import com.meditrack.ui.components.ScreenHeader
 import com.meditrack.ui.components.StatusBadge
 import com.meditrack.ui.displayTime
+import com.meditrack.ui.labelRes
 import com.meditrack.ui.stockText
 import java.time.LocalTime
 
@@ -69,7 +73,7 @@ fun DashboardScreen(
     ) {
         item {
             ScreenHeader(
-                title = "Today",
+                title = stringResource(R.string.today_title),
                 subtitle = state.todayLabel
             )
         }
@@ -128,7 +132,9 @@ private fun AlertSummaryCard(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = if (hasCritical) "Needs attention now" else "Refill reminders",
+                text = stringResource(
+                    if (hasCritical) R.string.alert_needs_attention else R.string.alert_refill_reminders
+                ),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = foreground
@@ -149,11 +155,11 @@ private fun AlertSummaryCard(
 private fun EmptyTodayState(onAddMedication: () -> Unit) {
     BasicCard(modifier = Modifier.padding(16.dp)) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("Nothing to take today.", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.today_empty_title), style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(8.dp))
-            Text("Add a medicine and we will show your reminders here each day.")
+            Text(stringResource(R.string.today_empty_body))
             Spacer(Modifier.height(12.dp))
-            Button(onClick = onAddMedication) { Text("Add medicine") }
+            Button(onClick = onAddMedication) { Text(stringResource(R.string.action_add_medicine_short)) }
         }
     }
 }
@@ -177,7 +183,7 @@ private fun DoseTimeCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = group.title,
+                    text = stringResource(group.titleRes),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f)
@@ -235,7 +241,7 @@ private fun DoseRow(
             // Only badge doses the user has acted on; "Pending" is the expected default and adds noise.
             if (dose.status != DoseStatus.PENDING) {
                 StatusBadge(
-                    text = dose.status.label,
+                    text = stringResource(dose.status.labelRes()),
                     color = statusColor(dose.status)
                 )
             }
@@ -246,12 +252,12 @@ private fun DoseRow(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Take ${dose.doseAmount.stockText()} ${dose.doseUnit}",
+                text = stringResource(R.string.dose_take_amount, dose.doseAmount.stockText(), dose.doseUnit),
                 style = MaterialTheme.typography.titleMedium
             )
             when (stockStatus) {
-                StockStatus.OUT -> StatusBadge(text = "Out of stock", color = Color(0xFFB42318))
-                StockStatus.LOW -> StatusBadge(text = "Low stock", color = Color(0xFFB54708))
+                StockStatus.OUT -> StatusBadge(text = stringResource(R.string.badge_out_of_stock), color = Color(0xFFB42318))
+                StockStatus.LOW -> StatusBadge(text = stringResource(R.string.badge_low_stock), color = Color(0xFFB54708))
                 StockStatus.OK -> Unit
             }
         }
@@ -267,7 +273,7 @@ private fun DoseRow(
                         .weight(1f)
                         .height(52.dp)
                 ) {
-                    Text("Taken")
+                    Text(stringResource(R.string.action_taken))
                 }
                 OutlinedButton(
                     onClick = onSkip,
@@ -275,7 +281,7 @@ private fun DoseRow(
                         .weight(1f)
                         .height(52.dp)
                 ) {
-                    Text("Skip")
+                    Text(stringResource(R.string.action_skip))
                 }
             }
         }
@@ -284,7 +290,7 @@ private fun DoseRow(
 
 private data class DoseTimeGroup(
     val key: String,
-    val title: String,
+    @StringRes val titleRes: Int,
     val timeLabel: String,
     val sortTime: LocalTime,
     val doses: List<DoseEventWithMedication>
@@ -296,7 +302,7 @@ private fun List<DoseEventWithMedication>.groupIntoTimeCards(): List<DoseTimeGro
             val first = doses.minBy { it.scheduledDateTime }
             DoseTimeGroup(
                 key = key,
-                title = first.groupTitle(),
+                titleRes = first.groupTitleRes(),
                 timeLabel = first.scheduledDateTime.displayTime(),
                 sortTime = first.scheduledDateTime.toLocalTime(),
                 doses = doses.sortedWith(
@@ -318,13 +324,14 @@ private fun DoseEventWithMedication.groupKey(): String {
     }
 }
 
-private fun DoseEventWithMedication.groupTitle(): String {
+@StringRes
+private fun DoseEventWithMedication.groupTitleRes(): Int {
     val time = scheduledDateTime.toLocalTime()
     return when (time) {
-        LocalTime.of(8, 0) -> "Morning"
-        LocalTime.of(14, 0) -> "Noon / Afternoon"
-        LocalTime.of(22, 0) -> "Night"
-        else -> "Custom time"
+        LocalTime.of(8, 0) -> R.string.group_morning
+        LocalTime.of(14, 0) -> R.string.group_afternoon
+        LocalTime.of(22, 0) -> R.string.group_night
+        else -> R.string.group_custom
     }
 }
 

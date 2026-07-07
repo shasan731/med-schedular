@@ -3,6 +3,7 @@ package com.meditrack.ui.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.meditrack.AppGraph
+import com.meditrack.R
 import com.meditrack.data.repository.AppSettings
 import com.meditrack.data.repository.ThemeMode
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,11 +26,11 @@ class SettingsViewModel : ViewModel() {
     fun saveLowStockThreshold(value: String) {
         val parsed = value.toDoubleOrNull()
         if (parsed == null || parsed < 0.0) {
-            message.value = "Low-stock threshold must be 0 or greater."
+            message.value = AppGraph.appContext.getString(R.string.msg_low_stock_invalid)
             return
         }
         settingsRepository.updateDefaultLowStockThreshold(parsed)
-        message.value = "Default low-stock threshold saved."
+        message.value = AppGraph.appContext.getString(R.string.msg_low_stock_saved)
     }
 
     fun setNotificationsEnabled(enabled: Boolean) {
@@ -51,7 +52,7 @@ class SettingsViewModel : ViewModel() {
         exportJson.value = null
         viewModelScope.launch {
             exportJson.value = medicationRepository.exportLocalDataAsJson()
-            message.value = "Local data export generated below."
+            message.value = AppGraph.appContext.getString(R.string.msg_export_generated)
         }
     }
 
@@ -64,7 +65,7 @@ class SettingsViewModel : ViewModel() {
             medicationRepository.clearAllData()
             scheduler.rescheduleMedicationReminders()
             exportJson.value = null
-            message.value = "All local medication data cleared."
+            message.value = AppGraph.appContext.getString(R.string.msg_cleared)
         }
     }
 }

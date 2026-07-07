@@ -1,3 +1,181 @@
 <resources>
     <string name="app_name">MediTrack</string>
+
+    <!-- Navigation / common actions -->
+    <string name="tab_today">Today</string>
+    <string name="tab_medicines">Medicines</string>
+    <string name="tab_settings">Settings</string>
+    <string name="action_add_medicine">Add Medicine</string>
+    <string name="action_add_medicine_short">Add medicine</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_ok">OK</string>
+    <string name="action_save">Save</string>
+    <string name="action_done">Done</string>
+    <string name="action_edit">Edit</string>
+    <string name="action_refill">Refill</string>
+    <string name="action_back">Back</string>
+    <string name="action_taken">Taken</string>
+    <string name="action_skip">Skip</string>
+    <string name="stepper_decrease">Decrease %1$s</string>
+    <string name="stepper_increase">Increase %1$s</string>
+
+    <!-- Days remaining -->
+    <string name="days_no_usage">No scheduled usage</string>
+    <string name="days_zero">0 days</string>
+    <string name="days_less_than_one">&lt;1 day</string>
+    <string name="days_one">%1$s day</string>
+    <string name="days_many">%1$s days</string>
+
+    <!-- Stock badges -->
+    <string name="badge_out_of_stock">Out of stock</string>
+    <string name="badge_low_stock">Low stock</string>
+    <string name="badge_course_complete">Course complete</string>
+
+    <!-- Today -->
+    <string name="today_title">Today</string>
+    <string name="alert_needs_attention">Needs attention now</string>
+    <string name="alert_refill_reminders">Refill reminders</string>
+    <string name="today_empty_title">Nothing to take today.</string>
+    <string name="today_empty_body">Add a medicine and we will show your reminders here each day.</string>
+    <string name="dose_take_amount">Take %1$s %2$s</string>
+    <string name="alert_out_of_stock">%1$s is out of stock.</string>
+    <string name="alert_refill_soon">Refill soon: %1$s has %2$s remaining.</string>
+    <string name="group_morning">Morning</string>
+    <string name="group_afternoon">Noon / Afternoon</string>
+    <string name="group_night">Night</string>
+    <string name="group_custom">Custom time</string>
+
+    <!-- Medicines (inventory) -->
+    <string name="medicines_title">My Medicines</string>
+    <string name="medicines_count">%1$d medicine(s)</string>
+    <string name="medicines_empty_title">No medicines yet.</string>
+    <string name="medicines_empty_body">Tap the button to add your first medicine.</string>
+    <string name="open_details">Open details</string>
+    <string name="fixed_course_summary">Required: %1$s %2$s; remaining doses: %3$d</string>
+    <string name="purchase_warning">Purchase warning: stock is below total course requirement.</string>
+    <string name="action_disable">Disable</string>
+    <string name="action_disable_confirm">Confirm disable</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_delete_confirm">Confirm delete</string>
+
+    <!-- Refill dialog -->
+    <string name="refill_title">Refill %1$s</string>
+    <string name="refill_prompt">How many %1$s did you add to your stock?</string>
+    <string name="refill_add">Add to stock</string>
+
+    <!-- Add / edit medicine -->
+    <string name="add_title">Add Medicine</string>
+    <string name="edit_title">Edit Medicine</string>
+    <string name="add_subtitle">Just answer a few simple questions. You can change anything later.</string>
+    <string name="section_medicine">1. What is the medicine?</string>
+    <string name="field_medicine_name">Medicine name</string>
+    <string name="field_form">What form is it? (tablet, capsule, ml, drop)</string>
+    <string name="field_form_help">This is what we count. Most people leave it as tablet.</string>
+    <string name="field_note">Special note (optional)</string>
+    <string name="field_note_help">For example: after meal. Leave empty if you are not sure.</string>
+    <string name="section_duration">2. How long will you take it?</string>
+    <string name="treatment_continuous">Every day, ongoing</string>
+    <string name="treatment_fixed">For a set number of days</string>
+    <string name="field_start_date">Start date</string>
+    <string name="field_end_date_optional">End date (optional)</string>
+    <string name="course_length_q">How many days is the course?</string>
+    <string name="field_how_many">How many</string>
+    <string name="course_last_day">Last day: %1$s.</string>
+    <string name="course_last_day_pending">The last day is worked out once you enter the number of days.</string>
+    <string name="section_schedule">3. How much and when?</string>
+    <string name="advanced_toggle_title">Set a custom schedule</string>
+    <string name="advanced_toggle_help">Most people can leave this off. Turn it on only for hourly, weekly, or monthly plans.</string>
+    <string name="simple_help">How many do you take at each time of day? Tap + or − to set the amount.</string>
+    <string name="sub_morning">Reminder at 8:00 AM</string>
+    <string name="sub_afternoon">Reminder at 2:00 PM</string>
+    <string name="sub_night">Reminder at 10:00 PM</string>
+    <string name="quick_fill">Quick fill</string>
+    <string name="preset_morning_night">Morning + night</string>
+    <string name="preset_night_only">Night only</string>
+    <string name="course_needs">You will need about %1$s %2$s for the whole course.</string>
+    <string name="units_fallback">units</string>
+    <string name="adv_dose_each">How many each time</string>
+    <string name="adv_schedule_type">Schedule type</string>
+    <string name="adv_reminder_times">Reminder times</string>
+    <string name="adv_reminder_times_help">Separate times with commas, e.g. 08:00, 2:00 PM, 10:00 PM.</string>
+    <string name="adv_every">Every</string>
+    <string name="adv_reminder_time">Reminder time</string>
+    <string name="adv_days_of_week">Days of week</string>
+    <string name="adv_days_of_week_help">1=Mon through 7=Sun, comma-separated.</string>
+    <string name="adv_day_of_month">Day of month</string>
+    <string name="section_stock">4. How many do you have?</string>
+    <string name="field_current_stock">Amount you have now</string>
+    <string name="field_current_stock_help">The number of %1$s in your box or bottle right now.</string>
+    <string name="field_low_stock">Warn me when about this many days are left</string>
+    <string name="field_low_stock_help">We will remind you to refill before you run out.</string>
+    <string name="date_choose">Tap to choose a date</string>
+    <string name="clear_date">Clear date</string>
+    <string name="save_purchase_warning">Saved. Purchase warning: you need %1$s %2$s for the full course.</string>
+
+    <!-- Detail -->
+    <string name="detail_default_title">Medicine</string>
+    <string name="detail_not_found">Medicine not found.</string>
+    <string name="detail_stock">Stock: %1$s %2$s</string>
+    <string name="detail_days_remaining">Days remaining: %1$s</string>
+    <string name="detail_unknown">Unknown</string>
+    <string name="detail_treatment">Treatment: %1$s</string>
+    <string name="detail_schedule">Schedule: %1$s</string>
+    <string name="detail_required_stock">Required stock: %1$s %2$s</string>
+    <string name="detail_remaining_doses">Remaining doses: %1$d</string>
+    <string name="detail_purchase_warning">Purchase warning: stock is below the total course requirement.</string>
+    <string name="action_refill_stock">Refill stock</string>
+    <string name="dose_history">Dose history</string>
+    <string name="no_dose_history">No dose history yet.</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_subtitle">Local-only preferences</string>
+    <string name="settings_defaults">Defaults</string>
+    <string name="settings_defaults_help">Choose a comfortable app appearance and default refill warning.</string>
+    <string name="settings_theme">Theme</string>
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="settings_language">Language</string>
+    <string name="lang_english">English</string>
+    <string name="lang_bengali">বাংলা</string>
+    <string name="settings_low_stock_label">Default low-stock threshold days</string>
+    <string name="settings_notifications">Notifications</string>
+    <string name="settings_reminders_enabled">Dose reminders enabled</string>
+    <string name="settings_vibration_enabled">Vibration enabled</string>
+    <string name="settings_local_data">Local data</string>
+    <string name="settings_export">Export JSON</string>
+    <string name="settings_clear">Clear all data</string>
+    <string name="settings_clear_confirm">Confirm clear</string>
+    <string name="settings_exported_json">Exported JSON</string>
+    <string name="msg_low_stock_saved">Default low-stock threshold saved.</string>
+    <string name="msg_low_stock_invalid">Low-stock threshold must be 0 or greater.</string>
+    <string name="msg_export_generated">Local data export generated below.</string>
+    <string name="msg_export_saved">Local data exported to the selected JSON file.</string>
+    <string name="msg_export_failed">Export failed: %1$s</string>
+    <string name="msg_export_unknown_error">unknown error</string>
+    <string name="msg_cleared">All local medication data cleared.</string>
+
+    <!-- Notifications -->
+    <string name="notif_channel_name">Dose reminders</string>
+    <string name="notif_channel_desc">Medication dose reminder notifications</string>
+    <string name="notif_title">Medication due: %1$s</string>
+    <string name="notif_action_taken">Mark Taken</string>
+    <string name="notif_action_skip">Skip</string>
+
+    <!-- Enum labels -->
+    <string name="status_pending">Pending</string>
+    <string name="status_taken">Taken</string>
+    <string name="status_skipped">Skipped</string>
+    <string name="status_missed">Missed</string>
+    <string name="sched_specific">Specific times</string>
+    <string name="sched_hourly">Hourly interval</string>
+    <string name="sched_daily">Daily interval</string>
+    <string name="sched_weekly">Weekly interval</string>
+    <string name="sched_monthly">Monthly interval</string>
+    <string name="treatment_continuous_label">Continuous</string>
+    <string name="treatment_fixed_label">Fixed Course</string>
+    <string name="unit_days">Days</string>
+    <string name="unit_weeks">Weeks</string>
+    <string name="unit_months">Months</string>
 </resources>

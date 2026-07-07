@@ -3,6 +3,7 @@ package com.meditrack.ui.dashboard
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.meditrack.AppGraph
+import com.meditrack.R
 import com.meditrack.data.local.entity.DoseEventWithMedication
 import com.meditrack.domain.InventoryCalculator
 import com.meditrack.ui.daysRemainingText
@@ -32,6 +33,7 @@ class DashboardViewModel : ViewModel() {
             val summaries = medications.associate { item ->
                 item.medication.id to InventoryCalculator.buildSummary(item.medication, item.schedules)
             }
+            val context = AppGraph.appContext
             val alerts = medications.mapNotNull { item ->
                 val medication = item.medication
                 // Only surface refill/out-of-stock alerts for medications that are actually active
@@ -40,11 +42,15 @@ class DashboardViewModel : ViewModel() {
                 val summary = summaries.getValue(medication.id)
                 when {
                     summary.outOfStock -> StockAlert(
-                        message = "${medication.name} is out of stock.",
+                        message = context.getString(R.string.alert_out_of_stock, medication.name),
                         severity = AlertSeverity.CRITICAL
                     )
                     summary.lowStock -> StockAlert(
-                        message = "Refill soon: ${medication.name} has ${summary.daysRemaining.daysRemainingText()} remaining.",
+                        message = context.getString(
+                            R.string.alert_refill_soon,
+                            medication.name,
+                            summary.daysRemaining.daysRemainingText(context)
+                        ),
                         severity = AlertSeverity.WARNING
                     )
                     else -> null

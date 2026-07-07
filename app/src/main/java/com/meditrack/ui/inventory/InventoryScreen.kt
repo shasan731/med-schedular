@@ -28,9 +28,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.meditrack.R
 import com.meditrack.domain.model.TreatmentType
 import com.meditrack.ui.components.BasicCard
 import com.meditrack.ui.components.ConfirmingTextButton
@@ -38,6 +41,7 @@ import com.meditrack.ui.components.RefillDialog
 import com.meditrack.ui.components.ScreenHeader
 import com.meditrack.ui.components.StatusBadge
 import com.meditrack.ui.daysRemainingText
+import com.meditrack.ui.labelRes
 import com.meditrack.ui.stockText
 
 @Composable
@@ -71,8 +75,8 @@ fun InventoryScreen(
     ) {
         item {
             ScreenHeader(
-                title = "My Medicines",
-                subtitle = "${state.items.size} medicine(s)"
+                title = stringResource(R.string.medicines_title),
+                subtitle = stringResource(R.string.medicines_count, state.items.size)
             )
         }
 
@@ -80,14 +84,14 @@ fun InventoryScreen(
             item {
                 BasicCard(modifier = Modifier.padding(16.dp)) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text("No medicines yet.", style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(R.string.medicines_empty_title), style = MaterialTheme.typography.titleMedium)
                         Spacer(Modifier.height(8.dp))
                         Text(
-                            "Tap the button to add your first medicine.",
+                            stringResource(R.string.medicines_empty_body),
                             style = MaterialTheme.typography.bodyMedium
                         )
                         Spacer(Modifier.height(12.dp))
-                        Button(onClick = onAddMedication) { Text("Add medicine") }
+                        Button(onClick = onAddMedication) { Text(stringResource(R.string.action_add_medicine_short)) }
                     }
                 }
             }
@@ -130,6 +134,7 @@ private fun InventoryCard(
     onDeleteConfirm: () -> Unit
 ) {
     val medication = item.medication
+    val context = LocalContext.current
     BasicCard(
         modifier = Modifier
             .padding(horizontal = 16.dp)
@@ -154,35 +159,40 @@ private fun InventoryCard(
                         "${medication.currentStock.stockText()} ${medication.doseUnit}",
                         fontWeight = FontWeight.SemiBold
                     )
-                    Text(item.summary.daysRemaining.daysRemainingText(), style = MaterialTheme.typography.bodySmall)
+                    Text(item.summary.daysRemaining.daysRemainingText(context), style = MaterialTheme.typography.bodySmall)
                 }
                 Icon(
                     imageVector = Icons.Rounded.ChevronRight,
-                    contentDescription = "Open details",
+                    contentDescription = stringResource(R.string.open_details),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                StatusBadge(medication.treatmentType.label, Color(0xFF355C7D))
+                StatusBadge(stringResource(medication.treatmentType.labelRes()), Color(0xFF355C7D))
                 if (item.summary.outOfStock) {
-                    StatusBadge("Out of stock", Color(0xFFB42318))
+                    StatusBadge(stringResource(R.string.badge_out_of_stock), Color(0xFFB42318))
                 } else if (item.summary.lowStock) {
-                    StatusBadge("Low stock", Color(0xFFB54708))
+                    StatusBadge(stringResource(R.string.badge_low_stock), Color(0xFFB54708))
                 }
                 if (item.summary.courseComplete) {
-                    StatusBadge("Course complete", Color(0xFF1E7E6F))
+                    StatusBadge(stringResource(R.string.badge_course_complete), Color(0xFF1E7E6F))
                 }
             }
 
             if (medication.treatmentType == TreatmentType.FIXED_COURSE) {
                 Text(
-                    text = "Required: ${medication.totalRequiredStock?.stockText() ?: "0"} ${medication.doseUnit}; remaining doses: ${item.summary.remainingDoses ?: 0}",
+                    text = stringResource(
+                        R.string.fixed_course_summary,
+                        medication.totalRequiredStock?.stockText() ?: "0",
+                        medication.doseUnit,
+                        item.summary.remainingDoses ?: 0
+                    ),
                     style = MaterialTheme.typography.bodySmall
                 )
                 if (item.summary.insufficientStockForCourse) {
                     Text(
-                        "Purchase warning: stock is below total course requirement.",
+                        stringResource(R.string.purchase_warning),
                         color = Color(0xFFB42318),
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.SemiBold
@@ -198,13 +208,13 @@ private fun InventoryCard(
                     onClick = onRefill,
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("Refill")
+                    Text(stringResource(R.string.action_refill))
                 }
                 OutlinedButton(
                     onClick = onEdit,
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("Edit")
+                    Text(stringResource(R.string.action_edit))
                 }
             }
             Row(
@@ -212,16 +222,16 @@ private fun InventoryCard(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 ConfirmingTextButton(
-                    label = "Disable",
-                    confirmingLabel = "Confirm disable",
+                    label = stringResource(R.string.action_disable),
+                    confirmingLabel = stringResource(R.string.action_disable_confirm),
                     awaitingConfirmation = awaitingDisable,
                     onFirstClick = onDisableFirstClick,
                     onConfirm = onDisableConfirm,
                     modifier = Modifier.weight(1f)
                 )
                 ConfirmingTextButton(
-                    label = "Delete",
-                    confirmingLabel = "Confirm delete",
+                    label = stringResource(R.string.action_delete),
+                    confirmingLabel = stringResource(R.string.action_delete_confirm),
                     awaitingConfirmation = awaitingDelete,
                     onFirstClick = onDeleteFirstClick,
                     onConfirm = onDeleteConfirm,

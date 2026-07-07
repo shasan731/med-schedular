@@ -8,6 +8,8 @@ import com.meditrack.data.repository.SettingsRepository
 import com.meditrack.notifications.ReminderScheduler
 
 object AppGraph {
+    lateinit var appContext: Context
+        private set
     lateinit var database: AppDatabase
         private set
     lateinit var medicationRepository: MedicationRepository
@@ -20,6 +22,7 @@ object AppGraph {
     fun initialize(context: Context) {
         if (::database.isInitialized) return
         val appContext = context.applicationContext
+        this.appContext = appContext
         database = Room.databaseBuilder(
             appContext,
             AppDatabase::class.java,

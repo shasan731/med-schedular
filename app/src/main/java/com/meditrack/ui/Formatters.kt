@@ -1,5 +1,7 @@
 package com.meditrack.ui
 
+import android.content.Context
+import com.meditrack.R
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -19,11 +21,12 @@ fun Double.stockText(): String {
     return if (rounded % 1.0 == 0.0) rounded.toInt().toString() else rounded.toString()
 }
 
-fun Double.daysRemainingText(): String {
-    if (isInfinite()) return "No scheduled usage"
-    if (this <= 0.0) return "0 days"
-    if (this < 1.0) return "<1 day"
+fun Double.daysRemainingText(context: Context): String {
+    if (isInfinite()) return context.getString(R.string.days_no_usage)
+    if (this <= 0.0) return context.getString(R.string.days_zero)
+    if (this < 1.0) return context.getString(R.string.days_less_than_one)
     val rounded = (this * 10.0).roundToInt() / 10.0
     val number = if (rounded % 1.0 == 0.0) rounded.toInt().toString() else rounded.toString()
-    return "$number ${if (rounded == 1.0) "day" else "days"}"
+    val resId = if (rounded == 1.0) R.string.days_one else R.string.days_many
+    return context.getString(resId, number)
 }

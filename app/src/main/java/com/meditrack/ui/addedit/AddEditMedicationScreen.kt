@@ -48,7 +48,10 @@ import com.meditrack.ui.components.ScreenHeader
 import com.meditrack.ui.components.SecondaryActionButton
 import com.meditrack.ui.components.WarningBand
 import com.meditrack.ui.longDisplayDate
+import com.meditrack.ui.labelRes
 import com.meditrack.ui.stockText
+import androidx.compose.ui.res.stringResource
+import com.meditrack.R
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -72,8 +75,8 @@ fun AddEditMedicationScreen(
         ) {
             item {
                 ScreenHeader(
-                    title = if (medicationId == null) "Add Medicine" else "Edit Medicine",
-                    subtitle = "Just answer a few simple questions. You can change anything later."
+                    title = stringResource(if (medicationId == null) R.string.add_title else R.string.edit_title),
+                    subtitle = stringResource(R.string.add_subtitle)
                 )
             }
             state.errorMessage?.let { message ->
@@ -123,12 +126,12 @@ private fun AddEditBottomActions(
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             SecondaryActionButton(
-                text = "Cancel",
+                text = stringResource(R.string.action_cancel),
                 onClick = onCancel,
                 modifier = Modifier.weight(1f)
             )
             PrimaryActionButton(
-                text = if (savedWithWarning) "Done" else "Save",
+                text = stringResource(if (savedWithWarning) R.string.action_done else R.string.action_save),
                 onClick = if (savedWithWarning) onDone else onSave,
                 modifier = Modifier.weight(1f)
             )
@@ -146,19 +149,19 @@ private fun MedicineSection(
             modifier = Modifier.padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            SectionTitle("1. What is the medicine?")
-            FormTextField("Medicine name", state.name) { value ->
+            SectionTitle(stringResource(R.string.section_medicine))
+            FormTextField(stringResource(R.string.field_medicine_name), state.name) { value ->
                 update { it.copy(name = value) }
             }
             FormTextField(
-                label = "What form is it? (tablet, capsule, ml, drop)",
+                label = stringResource(R.string.field_form),
                 value = state.doseUnit,
-                supporting = "This is what we count. Most people leave it as tablet."
+                supporting = stringResource(R.string.field_form_help)
             ) { value -> update { it.copy(doseUnit = value) } }
             FormTextField(
-                label = "Special note (optional)",
+                label = stringResource(R.string.field_note),
                 value = state.dosageInstruction,
-                supporting = "For example: after meal. Leave empty if you are not sure."
+                supporting = stringResource(R.string.field_note_help)
             ) { value -> update { it.copy(dosageInstruction = value) } }
         }
     }
@@ -174,17 +177,17 @@ private fun TreatmentSection(
             modifier = Modifier.padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            SectionTitle("2. How long will you take it?")
+            SectionTitle(stringResource(R.string.section_duration))
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 TreatmentButton(
-                    label = "Every day, ongoing",
+                    label = stringResource(R.string.treatment_continuous),
                     selected = state.treatmentType == TreatmentType.CONTINUOUS,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     update { it.copy(treatmentType = TreatmentType.CONTINUOUS, endDate = "") }
                 }
                 TreatmentButton(
-                    label = "For a set number of days",
+                    label = stringResource(R.string.treatment_fixed),
                     selected = state.treatmentType == TreatmentType.FIXED_COURSE,
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -192,27 +195,27 @@ private fun TreatmentSection(
                 }
             }
             DateInputField(
-                label = "Start date",
+                label = stringResource(R.string.field_start_date),
                 value = state.startDate,
                 modifier = Modifier.fillMaxWidth()
             ) { value -> update { it.copy(startDate = value) } }
 
             if (state.treatmentType == TreatmentType.FIXED_COURSE) {
                 Text(
-                    "How many days is the course?",
+                    stringResource(R.string.course_length_q),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     NumberTextField(
-                        label = "How many",
+                        label = stringResource(R.string.field_how_many),
                         value = state.courseDurationValue,
                         modifier = Modifier.weight(1f)
                     ) { value -> update { it.copy(courseDurationValue = value) } }
                     Column(modifier = Modifier.weight(2f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         CourseDurationUnit.entries.forEach { unit ->
                             TreatmentButton(
-                                label = unit.label,
+                                label = stringResource(unit.labelRes()),
                                 selected = state.courseDurationUnit == unit,
                                 modifier = Modifier.fillMaxWidth()
                             ) {
@@ -225,16 +228,16 @@ private fun TreatmentSection(
                     ?.let { runCatching { LocalDate.parse(it).longDisplayDate() }.getOrNull() }
                 Text(
                     text = if (friendlyEndDate != null) {
-                        "Last day: $friendlyEndDate."
+                        stringResource(R.string.course_last_day, friendlyEndDate)
                     } else {
-                        "The last day is worked out once you enter the number of days."
+                        stringResource(R.string.course_last_day_pending)
                     },
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.secondary
                 )
             } else {
                 DateInputField(
-                    label = "End date (optional)",
+                    label = stringResource(R.string.field_end_date_optional),
                     value = state.endDate,
                     modifier = Modifier.fillMaxWidth(),
                     optional = true
@@ -254,16 +257,16 @@ private fun PrescriptionSection(
             modifier = Modifier.padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            SectionTitle("3. How much and when?")
+            SectionTitle(stringResource(R.string.section_schedule))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Set a custom schedule", fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.advanced_toggle_title), fontWeight = FontWeight.SemiBold)
                     Text(
-                        "Most people can leave this off. Turn it on only for hourly, weekly, or monthly plans.",
+                        stringResource(R.string.advanced_toggle_help),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.secondary
                     )
@@ -290,27 +293,27 @@ private fun SimplePrescriptionFields(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Text(
-            "How many do you take at each time of day? Tap + or − to set the amount.",
+            stringResource(R.string.simple_help),
             style = MaterialTheme.typography.bodyMedium
         )
         DoseStepperRow(
-            label = "Morning",
-            sublabel = "Reminder at 8:00 AM",
+            label = stringResource(R.string.group_morning),
+            sublabel = stringResource(R.string.sub_morning),
             value = state.morningDose
         ) { value -> update { it.copy(morningDose = value) } }
         DoseStepperRow(
-            label = "Afternoon",
-            sublabel = "Reminder at 2:00 PM",
+            label = stringResource(R.string.group_afternoon),
+            sublabel = stringResource(R.string.sub_afternoon),
             value = state.afternoonDose
         ) { value -> update { it.copy(afternoonDose = value) } }
         DoseStepperRow(
-            label = "Night",
-            sublabel = "Reminder at 10:00 PM",
+            label = stringResource(R.string.group_night),
+            sublabel = stringResource(R.string.sub_night),
             value = state.nightDose
         ) { value -> update { it.copy(nightDose = value) } }
 
         Text(
-            "Quick fill",
+            stringResource(R.string.quick_fill),
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.secondary
@@ -320,18 +323,22 @@ private fun SimplePrescriptionFields(
                 onClick = { update { it.copy(morningDose = "1", afternoonDose = "0", nightDose = "1") } },
                 modifier = Modifier.weight(1f)
             ) {
-                Text("Morning + night")
+                Text(stringResource(R.string.preset_morning_night))
             }
             OutlinedButton(
                 onClick = { update { it.copy(morningDose = "0", afternoonDose = "0", nightDose = "1") } },
                 modifier = Modifier.weight(1f)
             ) {
-                Text("Night only")
+                Text(stringResource(R.string.preset_night_only))
             }
         }
         state.estimatedSimpleRequiredStock()?.let { required ->
             Text(
-                "You will need about ${required.stockText()} ${state.doseUnit.ifBlank { "units" }} for the whole course.",
+                stringResource(
+                    R.string.course_needs,
+                    required.stockText(),
+                    state.doseUnit.ifBlank { stringResource(R.string.units_fallback) }
+                ),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold
             )
@@ -346,13 +353,13 @@ private fun AdvancedScheduleFields(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         DoseStepperRow(
-            label = "How many each time",
+            label = stringResource(R.string.adv_dose_each),
             value = state.doseAmount
         ) { value -> update { it.copy(doseAmount = value) } }
-        Text("Schedule type", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+        Text(stringResource(R.string.adv_schedule_type), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
         ScheduleType.entries.forEach { type ->
             TreatmentButton(
-                label = type.label,
+                label = stringResource(type.labelRes()),
                 selected = state.scheduleType == type,
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -362,33 +369,33 @@ private fun AdvancedScheduleFields(
 
         if (state.scheduleType == ScheduleType.SPECIFIC_TIMES) {
             FormTextField(
-                label = "Reminder times",
+                label = stringResource(R.string.adv_reminder_times),
                 value = state.reminderTimes,
-                supporting = "Separate times with commas, e.g. 08:00, 2:00 PM, 10:00 PM."
+                supporting = stringResource(R.string.adv_reminder_times_help)
             ) { value -> update { it.copy(reminderTimes = value) } }
         } else {
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 NumberTextField(
-                    label = "Every",
+                    label = stringResource(R.string.adv_every),
                     value = state.intervalValue,
                     modifier = Modifier.weight(1f)
                 ) { value -> update { it.copy(intervalValue = value) } }
                 FormTextField(
-                    label = "Reminder time",
+                    label = stringResource(R.string.adv_reminder_time),
                     value = state.reminderTimes,
                     modifier = Modifier.weight(1f)
                 ) { value -> update { it.copy(reminderTimes = value) } }
             }
             if (state.scheduleType == ScheduleType.WEEKLY_INTERVAL) {
                 FormTextField(
-                    label = "Days of week",
+                    label = stringResource(R.string.adv_days_of_week),
                     value = state.daysOfWeek,
-                    supporting = "1=Mon through 7=Sun, comma-separated."
+                    supporting = stringResource(R.string.adv_days_of_week_help)
                 ) { value -> update { it.copy(daysOfWeek = value) } }
             }
             if (state.scheduleType == ScheduleType.MONTHLY_INTERVAL) {
                 NumberTextField(
-                    label = "Day of month",
+                    label = stringResource(R.string.adv_day_of_month),
                     value = state.dayOfMonth
                 ) { value -> update { it.copy(dayOfMonth = value) } }
             }
@@ -406,16 +413,19 @@ private fun StockSection(
             modifier = Modifier.padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            SectionTitle("4. How many do you have?")
+            SectionTitle(stringResource(R.string.section_stock))
             NumberTextField(
-                label = "Amount you have now",
+                label = stringResource(R.string.field_current_stock),
                 value = state.currentStock,
-                supporting = "The number of ${state.doseUnit.ifBlank { "units" }} in your box or bottle right now."
+                supporting = stringResource(
+                    R.string.field_current_stock_help,
+                    state.doseUnit.ifBlank { stringResource(R.string.units_fallback) }
+                )
             ) { value -> update { it.copy(currentStock = value) } }
             NumberTextField(
-                label = "Warn me when about this many days are left",
+                label = stringResource(R.string.field_low_stock),
                 value = state.lowStockThresholdDays,
-                supporting = "We will remind you to refill before you run out."
+                supporting = stringResource(R.string.field_low_stock_help)
             ) { value -> update { it.copy(lowStockThresholdDays = value) } }
         }
     }
@@ -466,11 +476,11 @@ private fun DateInputField(
         ) {
             Icon(Icons.Rounded.CalendarMonth, contentDescription = null)
             Spacer(Modifier.width(10.dp))
-            Text(friendlyDate ?: "Tap to choose a date", fontWeight = FontWeight.SemiBold)
+            Text(friendlyDate ?: stringResource(R.string.date_choose), fontWeight = FontWeight.SemiBold)
         }
         if (optional && value.isNotBlank()) {
             TextButton(onClick = { onValueChange("") }) {
-                Text("Clear date")
+                Text(stringResource(R.string.clear_date))
             }
         }
     }
@@ -494,12 +504,12 @@ private fun DateInputField(
                         showPicker = false
                     }
                 ) {
-                    Text("OK")
+                    Text(stringResource(R.string.action_ok))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showPicker = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.action_cancel))
                 }
             }
         ) {

@@ -34,10 +34,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.meditrack.R
 
 @Composable
 fun ScreenHeader(
@@ -161,7 +163,7 @@ fun DoseStepperRow(
                 enabled = current > 0.0,
                 modifier = Modifier.size(52.dp)
             ) {
-                Icon(Icons.Rounded.Remove, contentDescription = "Fewer for $label")
+                Icon(Icons.Rounded.Remove, contentDescription = stringResource(R.string.stepper_decrease, label))
             }
             Text(
                 text = formatQuantity(current),
@@ -174,7 +176,7 @@ fun DoseStepperRow(
                 onClick = { onValueChange(formatQuantity(current + 1)) },
                 modifier = Modifier.size(52.dp)
             ) {
-                Icon(Icons.Rounded.Add, contentDescription = "More for $label")
+                Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.stepper_increase, label))
             }
         }
     }
@@ -200,10 +202,10 @@ fun RefillDialog(
     val valid = parsed != null && parsed > 0.0
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Refill $medicationName") },
+        title = { Text(stringResource(R.string.refill_title, medicationName)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("How many $unit did you add to your stock?")
+                Text(stringResource(R.string.refill_prompt, unit))
                 OutlinedTextField(
                     value = amount,
                     onValueChange = { amount = it },
@@ -217,11 +219,11 @@ fun RefillDialog(
                 onClick = { if (valid) onConfirm(parsed!!) },
                 enabled = valid
             ) {
-                Text("Add to stock")
+                Text(stringResource(R.string.refill_add))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
         }
     )
 }

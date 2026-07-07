@@ -11,6 +11,7 @@ import com.meditrack.domain.ScheduleCalculator
 import com.meditrack.domain.model.IntervalUnit
 import com.meditrack.domain.model.ScheduleType
 import com.meditrack.domain.model.TreatmentType
+import com.meditrack.ui.stockText
 import com.meditrack.utils.ValidationUtils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -61,7 +62,11 @@ class AddEditMedicationViewModel(
             scheduler.rescheduleMedicationReminders()
             if (result.insufficientStockForCourse) {
                 _state.value = _state.value.copy(
-                    warningMessage = "Saved. Purchase warning: you need ${result.totalRequiredStock} ${parsed.medication.doseUnit} for the full course."
+                    warningMessage = AppGraph.appContext.getString(
+                        com.meditrack.R.string.save_purchase_warning,
+                        (result.totalRequiredStock ?: 0.0).stockText(),
+                        parsed.medication.doseUnit
+                    )
                 )
             } else {
                 onSaved()

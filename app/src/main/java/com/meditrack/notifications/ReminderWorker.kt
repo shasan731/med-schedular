@@ -4,33 +4,19 @@ import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.meditrack.AppGraph
-import com.meditrack.domain.model.DoseStatus
 
+/**
+ * Periodic safety net. Exact alarms are the primary delivery mechanism, but the OS clears them on
+ * reboot and can drop them over long idle periods. This worker runs about once a day to refresh the
+ * dose-event horizon and re-arm the alarms, so reminders keep firing even if the app is never opened.
+ */
 class ReminderWorker(
     appContext: Context,
     workerParams: WorkerParameters
 ) : CoroutineWorker(appContext, workerParams) {
     override suspend fun doWork(): Result {
         AppGraph.initialize(applicationContext)
-        val doseEventId = inputData.getLong(KEY_DOSE_EVENT_ID, -1L)
-        if (doseEventId <= 0) return Result.failure()
-
-        val settings = AppGraph.settingsRepository.load()
-        if (!settings.notificationsEnabled) return Result.success()
-
-        val payload = AppGraph.medicationRepository.getDueDosePayload(doseEventId)
-            ?: return Result.success()
-        if (payload.doseEvent.status != DoseStatus.PENDING) return Result.success()
-
-        NotificationHelper.showDoseReminder(
-            context = applicationContext,
-            payload = payload,
-            vibrationEnabled = settings.vibrationEnabled
-        )
+        AppGraph.reminderScheduler.rescheduleMedicationReminders()
         return Result.success()
-    }
-
-    companion object {
-        const val KEY_DOSE_EVENT_ID = "dose_event_id"
     }
 }
