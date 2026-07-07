@@ -1,0 +1,27 @@
+package com.meditrack.data.local
+
+import androidx.room.Database
+import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
+import com.meditrack.data.local.dao.DoseEventDao
+import com.meditrack.data.local.dao.MedicationDao
+import com.meditrack.data.local.dao.ScheduleDao
+import com.meditrack.data.local.entity.DoseEventEntity
+import com.meditrack.data.local.entity.MedicationEntity
+import com.meditrack.data.local.entity.MedicationScheduleEntity
+
+@Database(
+    entities = [
+        MedicationEntity::class,
+        MedicationScheduleEntity::class,
+        DoseEventEntity::class
+    ],
+    version = 1,
+    exportSchema = false
+)
+@TypeConverters(RoomConverters::class)
+abstract class AppDatabase : RoomDatabase() {
+    abstract fun medicationDao(): MedicationDao
+    abstract fun scheduleDao(): ScheduleDao
+    abstract fun doseEventDao(): DoseEventDao
+}
