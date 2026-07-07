@@ -46,6 +46,12 @@ class InventoryViewModel : ViewModel() {
         initialValue = InventoryUiState()
     )
 
+    fun refill(id: Long, addedAmount: Double) {
+        viewModelScope.launch {
+            repository.refillMedication(id, addedAmount)
+        }
+    }
+
     fun disableMedication(id: Long) {
         viewModelScope.launch {
             repository.disableMedication(id)

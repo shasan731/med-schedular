@@ -10,9 +10,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Remove
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ElevatedCard
@@ -20,13 +22,20 @@ import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
@@ -173,6 +182,49 @@ fun DoseStepperRow(
 
 private fun formatQuantity(value: Double): String =
     if (value % 1.0 == 0.0) value.toInt().toString() else value.toString()
+
+/**
+ * Lightweight "add stock" dialog. Refilling is a one-number task, so it does not need the full
+ * edit form (which would also rebuild schedules and dose events). [onConfirm] receives the amount
+ * to add to current stock.
+ */
+@Composable
+fun RefillDialog(
+    medicationName: String,
+    unit: String,
+    onDismiss: () -> Unit,
+    onConfirm: (Double) -> Unit
+) {
+    var amount by remember { mutableStateOf("") }
+    val parsed = amount.toDoubleOrNull()
+    val valid = parsed != null && parsed > 0.0
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Refill $medicationName") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text("How many $unit did you add to your stock?")
+                OutlinedTextField(
+                    value = amount,
+                    onValueChange = { amount = it },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { if (valid) onConfirm(parsed!!) },
+                enabled = valid
+            ) {
+                Text("Add to stock")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        }
+    )
+}
 
 @Composable
 fun BasicCard(

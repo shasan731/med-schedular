@@ -282,6 +282,7 @@ Responsibilities:
 - Generate dose events for date ranges.
 - Mark doses Taken or Skipped.
 - Mark overdue pending doses Missed.
+- Refill medication stock by adding units to current stock.
 - Disable or delete medication.
 - Export local medication data as JSON.
 
@@ -414,13 +415,15 @@ Purpose:
 - Show days remaining.
 - Show treatment type.
 - Show low-stock, out-of-stock, and course-complete badges.
-- Allow Details, Edit, Disable, and Delete actions.
+- Allow Refill, Edit, Disable, and Delete actions.
 
 UX details:
 
-- Primary row actions are larger and easier to tap.
-- Disable/Delete require a second confirm tap.
+- Tapping a card opens the medication detail screen; a chevron hints that the whole card is tappable.
+- Primary actions are Refill and Edit; Refill opens a small dialog to add units to current stock without reopening the full form.
+- Disable/Delete are secondary and require a second confirm tap.
 - Fixed Course cards show required stock, remaining doses, and purchase warnings.
+- Adding medicine is done from the single app-wide floating button, so the screen has no duplicate header add button.
 
 ### Add/Edit Medication
 
@@ -489,6 +492,7 @@ Purpose:
 - Show current stock and days remaining.
 - Show schedule summary.
 - Show refill warnings.
+- Refill stock with a single button (adds units to current stock).
 - Show Fixed Course progress.
 - Show dose history.
 
@@ -607,7 +611,7 @@ Covered logic:
 
 High-value next steps:
 
-- Add a simple refill flow that records refill history separately from medication edits.
+- Extend the refill flow to record refill history separately (a basic refill that adds to current stock already exists on the Medicines and Detail screens).
 - Allow custom Morning/Afternoon/Night reminder times from Settings.
 - Add exact alarm support as an optional reminder mode with proper Android permission handling.
 - Add accessibility review with font scale, TalkBack labels, and contrast verification.

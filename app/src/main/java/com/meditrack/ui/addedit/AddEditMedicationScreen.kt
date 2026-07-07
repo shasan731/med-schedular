@@ -175,18 +175,18 @@ private fun TreatmentSection(
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             SectionTitle("2. How long will you take it?")
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 TreatmentButton(
                     label = "Every day, ongoing",
                     selected = state.treatmentType == TreatmentType.CONTINUOUS,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     update { it.copy(treatmentType = TreatmentType.CONTINUOUS, endDate = "") }
                 }
                 TreatmentButton(
                     label = "For a set number of days",
                     selected = state.treatmentType == TreatmentType.FIXED_COURSE,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     update { it.copy(treatmentType = TreatmentType.FIXED_COURSE) }
                 }

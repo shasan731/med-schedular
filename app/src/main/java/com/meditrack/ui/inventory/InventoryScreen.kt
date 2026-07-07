@@ -3,6 +3,7 @@ package com.meditrack.ui.inventory
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,7 +12,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -21,6 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -29,6 +34,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.meditrack.domain.model.TreatmentType
 import com.meditrack.ui.components.BasicCard
 import com.meditrack.ui.components.ConfirmingTextButton
+import com.meditrack.ui.components.RefillDialog
 import com.meditrack.ui.components.ScreenHeader
 import com.meditrack.ui.components.StatusBadge
 import com.meditrack.ui.daysRemainingText
@@ -44,17 +50,29 @@ fun InventoryScreen(
     val state by viewModel.uiState.collectAsState()
     var pendingDeleteId by remember { mutableStateOf<Long?>(null) }
     var pendingDisableId by remember { mutableStateOf<Long?>(null) }
+    var refillTarget by remember { mutableStateOf<InventoryItemUi?>(null) }
+
+    refillTarget?.let { target ->
+        RefillDialog(
+            medicationName = target.medication.name,
+            unit = target.medication.doseUnit,
+            onDismiss = { refillTarget = null },
+            onConfirm = { added ->
+                viewModel.refill(target.medication.id, added)
+                refillTarget = null
+            }
+        )
+    }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(bottom = 96.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         item {
             ScreenHeader(
                 title = "My Medicines",
-                subtitle = "${state.items.size} medicine(s)",
-                actionLabel = "Add medicine",
-                onAction = onAddMedication
+                subtitle = "${state.items.size} medicine(s)"
             )
         }
 
@@ -80,6 +98,7 @@ fun InventoryScreen(
                     awaitingDelete = pendingDeleteId == item.medication.id,
                     awaitingDisable = pendingDisableId == item.medication.id,
                     onClick = { onMedicationClick(item.medication.id) },
+                    onRefill = { refillTarget = item },
                     onEdit = { onEditMedication(item.medication.id) },
                     onDisableFirstClick = { pendingDisableId = item.medication.id },
                     onDisableConfirm = {
@@ -103,6 +122,7 @@ private fun InventoryCard(
     awaitingDelete: Boolean,
     awaitingDisable: Boolean,
     onClick: () -> Unit,
+    onRefill: () -> Unit,
     onEdit: () -> Unit,
     onDisableFirstClick: () -> Unit,
     onDisableConfirm: () -> Unit,
@@ -121,20 +141,26 @@ private fun InventoryCard(
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(medication.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                     Text(medication.dosageInstruction, style = MaterialTheme.typography.bodyMedium)
                     Text(item.scheduleSummary, style = MaterialTheme.typography.bodySmall)
                 }
-                Column {
+                Column(horizontalAlignment = Alignment.End) {
                     Text(
                         "${medication.currentStock.stockText()} ${medication.doseUnit}",
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(item.summary.daysRemaining.daysRemainingText(), style = MaterialTheme.typography.bodySmall)
                 }
+                Icon(
+                    imageVector = Icons.Rounded.ChevronRight,
+                    contentDescription = "Open details",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -142,7 +168,7 @@ private fun InventoryCard(
                 if (item.summary.outOfStock) {
                     StatusBadge("Out of stock", Color(0xFFB42318))
                 } else if (item.summary.lowStock) {
-                    StatusBadge("Low stock", Color(0xFFB42318))
+                    StatusBadge("Low stock", Color(0xFFB54708))
                 }
                 if (item.summary.courseComplete) {
                     StatusBadge("Course complete", Color(0xFF1E7E6F))
@@ -169,10 +195,10 @@ private fun InventoryCard(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Button(
-                    onClick = onClick,
+                    onClick = onRefill,
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("Details")
+                    Text("Refill")
                 }
                 OutlinedButton(
                     onClick = onEdit,

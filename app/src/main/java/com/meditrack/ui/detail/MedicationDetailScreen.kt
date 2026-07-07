@@ -15,6 +15,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -24,6 +27,7 @@ import com.meditrack.data.local.entity.DoseEventEntity
 import com.meditrack.domain.model.DoseStatus
 import com.meditrack.domain.model.TreatmentType
 import com.meditrack.ui.components.BasicCard
+import com.meditrack.ui.components.RefillDialog
 import com.meditrack.ui.components.ScreenHeader
 import com.meditrack.ui.components.StatusBadge
 import com.meditrack.ui.daysRemainingText
@@ -43,6 +47,19 @@ fun MedicationDetailScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val medication = state.medication
+    var showRefill by remember { mutableStateOf(false) }
+
+    if (showRefill && medication != null) {
+        RefillDialog(
+            medicationName = medication.name,
+            unit = medication.doseUnit,
+            onDismiss = { showRefill = false },
+            onConfirm = { added ->
+                viewModel.refill(added)
+                showRefill = false
+            }
+        )
+    }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -78,7 +95,7 @@ fun MedicationDetailScreen(
                         Text("Schedule: ${state.scheduleSummary}")
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             if (state.summary?.outOfStock == true) StatusBadge("Out of stock", Color(0xFFB42318))
-                            if (state.summary?.lowStock == true) StatusBadge("Refill warning", Color(0xFFB42318))
+                            if (state.summary?.lowStock == true) StatusBadge("Low stock", Color(0xFFB54708))
                             if (state.summary?.courseComplete == true) StatusBadge("Course complete", Color(0xFF1E7E6F))
                         }
                         if (medication.treatmentType == TreatmentType.FIXED_COURSE) {
@@ -91,6 +108,12 @@ fun MedicationDetailScreen(
                                     fontWeight = FontWeight.SemiBold
                                 )
                             }
+                        }
+                        Button(
+                            onClick = { showRefill = true },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Refill stock")
                         }
                     }
                 }

@@ -104,6 +104,19 @@ class MedicationRepository(
         )
     }
 
+    suspend fun refillMedication(medicationId: Long, addedAmount: Double) {
+        if (addedAmount <= 0.0) return
+        database.withTransaction {
+            val medication = medicationDao.getMedication(medicationId) ?: return@withTransaction
+            medicationDao.updateMedication(
+                medication.copy(
+                    currentStock = medication.currentStock + addedAmount,
+                    updatedAt = LocalDateTime.now()
+                )
+            )
+        }
+    }
+
     suspend fun disableMedication(medicationId: Long) {
         database.withTransaction {
             val now = LocalDateTime.now()

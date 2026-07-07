@@ -13,11 +13,18 @@ import com.meditrack.domain.model.DoseStatus
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 class MedicationDetailViewModel(
-    medicationId: Long
+    private val medicationId: Long
 ) : ViewModel() {
     private val repository = AppGraph.medicationRepository
+
+    fun refill(addedAmount: Double) {
+        viewModelScope.launch {
+            repository.refillMedication(medicationId, addedAmount)
+        }
+    }
 
     val uiState = combine(
         repository.observeMedication(medicationId),
