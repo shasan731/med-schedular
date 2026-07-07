@@ -43,10 +43,15 @@ class SettingsViewModel : ViewModel() {
     }
 
     fun exportJson() {
+        exportJson.value = null
         viewModelScope.launch {
             exportJson.value = medicationRepository.exportLocalDataAsJson()
             message.value = "Local data export generated below."
         }
+    }
+
+    fun setMessage(value: String) {
+        message.value = value
     }
 
     fun clearAllData() {

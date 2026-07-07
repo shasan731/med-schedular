@@ -9,13 +9,21 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -24,6 +32,9 @@ import com.meditrack.domain.model.ScheduleType
 import com.meditrack.domain.model.TreatmentType
 import com.meditrack.ui.components.ScreenHeader
 import com.meditrack.ui.components.WarningBand
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneOffset
 
 @Composable
 fun AddEditMedicationScreen(
@@ -131,15 +142,16 @@ private fun MedicationFields(
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            FormTextField(
+            DateInputField(
                 label = "Start date",
                 value = state.startDate,
                 modifier = Modifier.weight(1f)
             ) { value -> update { it.copy(startDate = value) } }
-            FormTextField(
+            DateInputField(
                 label = if (state.treatmentType == TreatmentType.FIXED_COURSE) "End date" else "End date optional",
                 value = state.endDate,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                optional = state.treatmentType != TreatmentType.FIXED_COURSE
             ) { value -> update { it.copy(endDate = value) } }
         }
 
@@ -189,6 +201,74 @@ private fun MedicationFields(
             }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DateInputField(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+    optional: Boolean = false,
+    onValueChange: (String) -> Unit
+) {
+    var showPicker by remember { mutableStateOf(false) }
+    Column(modifier = modifier) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = { },
+            label = { Text(label) },
+            modifier = Modifier.fillMaxWidth(),
+            readOnly = true,
+            singleLine = true
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedButton(onClick = { showPicker = true }) {
+                Text("Pick")
+            }
+            if (optional && value.isNotBlank()) {
+                TextButton(onClick = { onValueChange("") }) {
+                    Text("Clear")
+                }
+            }
+        }
+    }
+
+    if (showPicker) {
+        val initialMillis = remember(value) {
+            value.toLocalDateOrNull()?.atStartOfDay()?.toInstant(ZoneOffset.UTC)?.toEpochMilli()
+        }
+        val pickerState = rememberDatePickerState(initialSelectedDateMillis = initialMillis)
+        DatePickerDialog(
+            onDismissRequest = { showPicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        pickerState.selectedDateMillis?.let { millis ->
+                            val selectedDate = Instant.ofEpochMilli(millis)
+                                .atZone(ZoneOffset.UTC)
+                                .toLocalDate()
+                            onValueChange(selectedDate.toString())
+                        }
+                        showPicker = false
+                    }
+                ) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPicker = false }) {
+                    Text("Cancel")
+                }
+            }
+        ) {
+            DatePicker(state = pickerState)
+        }
+    }
+}
+
+private fun String.toLocalDateOrNull(): LocalDate? {
+    return runCatching { LocalDate.parse(trim()) }.getOrNull()
 }
 
 @Composable

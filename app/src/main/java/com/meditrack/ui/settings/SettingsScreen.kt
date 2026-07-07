@@ -1,5 +1,7 @@
 package com.meditrack.ui.settings
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,6 +23,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
@@ -30,19 +33,50 @@ import com.meditrack.ui.components.BasicCard
 import com.meditrack.ui.components.ConfirmingTextButton
 import com.meditrack.ui.components.ScreenHeader
 import com.meditrack.ui.components.WarningBand
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel = viewModel()
 ) {
+    val context = LocalContext.current
     val settings by viewModel.settings.collectAsState()
     val exportJson by viewModel.exportJson.collectAsState()
     val message by viewModel.message.collectAsState()
     var threshold by remember { mutableStateOf(settings.defaultLowStockThresholdDays.toString()) }
     var confirmingClear by remember { mutableStateOf(false) }
+    var pendingFileExport by remember { mutableStateOf(false) }
+
+    val exportFileLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        val json = exportJson
+        if (uri == null || json == null) {
+            pendingFileExport = false
+            return@rememberLauncherForActivityResult
+        }
+        runCatching {
+            context.contentResolver.openOutputStream(uri)?.use { output ->
+                output.write(json.toByteArray(Charsets.UTF_8))
+            } ?: error("Unable to open the selected file.")
+        }.onSuccess {
+            viewModel.setMessage("Local data exported to the selected JSON file.")
+        }.onFailure { error ->
+            viewModel.setMessage("Export failed: ${error.message ?: "unknown error"}")
+        }
+        pendingFileExport = false
+    }
 
     LaunchedEffect(settings.defaultLowStockThresholdDays) {
         threshold = settings.defaultLowStockThresholdDays.toString()
+    }
+
+    LaunchedEffect(exportJson, pendingFileExport) {
+        if (pendingFileExport && exportJson != null) {
+            val timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"))
+            exportFileLauncher.launch("meditrack-export-$timestamp.json")
+        }
     }
 
     LazyColumn(
@@ -112,7 +146,14 @@ fun SettingsScreen(
                 ) {
                     Text("Local data", style = MaterialTheme.typography.titleMedium)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Button(onClick = viewModel::exportJson) { Text("Export JSON") }
+                        Button(
+                            onClick = {
+                                pendingFileExport = true
+                                viewModel.exportJson()
+                            }
+                        ) {
+                            Text("Export JSON")
+                        }
                         ConfirmingTextButton(
                             label = "Clear all data",
                             confirmingLabel = "Confirm clear",
