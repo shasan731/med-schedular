@@ -9,6 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Inventory2
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Today
+import androidx.compose.material.icons.rounded.Vaccines
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -37,6 +38,8 @@ import com.meditrack.ui.dashboard.DashboardScreen
 import com.meditrack.ui.detail.MedicationDetailScreen
 import com.meditrack.ui.inventory.InventoryScreen
 import com.meditrack.ui.settings.SettingsScreen
+import com.meditrack.ui.vaccination.AddEditVaccinationScreen
+import com.meditrack.ui.vaccination.VaccinationScreen
 
 private object Routes {
     const val Dashboard = "dashboard"
@@ -44,6 +47,8 @@ private object Routes {
     const val AddEdit = "add-edit"
     const val Detail = "detail"
     const val Settings = "settings"
+    const val Vaccinations = "vaccinations"
+    const val AddEditVaccination = "add-edit-vaccination"
 }
 
 private data class BottomDestination(
@@ -58,6 +63,7 @@ fun MediTrackAppRoot() {
     val bottomDestinations = listOf(
         BottomDestination(Routes.Dashboard, stringResource(R.string.tab_today), Icons.Rounded.Today),
         BottomDestination(Routes.Inventory, stringResource(R.string.tab_medicines), Icons.Rounded.Inventory2),
+        BottomDestination(Routes.Vaccinations, stringResource(R.string.tab_vaccines), Icons.Rounded.Vaccines),
         BottomDestination(Routes.Settings, stringResource(R.string.tab_settings), Icons.Rounded.Settings)
     )
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -65,6 +71,7 @@ fun MediTrackAppRoot() {
     val currentRoute = currentDestination?.route.orEmpty()
     val showChrome = currentRoute == Routes.Dashboard ||
         currentRoute == Routes.Inventory ||
+        currentRoute == Routes.Vaccinations ||
         currentRoute == Routes.Settings
     val showAddButton = currentRoute == Routes.Dashboard || currentRoute == Routes.Inventory
 
@@ -193,6 +200,33 @@ fun MediTrackAppRoot() {
                     medicationId = medicationId,
                     onEdit = { navController.navigate("${Routes.AddEdit}?medicationId=$it") },
                     onBack = { navController.popBackStack() }
+                )
+            }
+            composable(Routes.Vaccinations) {
+                VaccinationScreen(
+                    onAddVaccination = { navController.navigate(Routes.AddEditVaccination) },
+                    onEditVaccination = { navController.navigate("${Routes.AddEditVaccination}?vaccinationId=$it") }
+                )
+            }
+            composable(
+                route = "${Routes.AddEditVaccination}?vaccinationId={vaccinationId}",
+                arguments = listOf(
+                    navArgument("vaccinationId") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    }
+                )
+            ) { entry ->
+                val vaccinationId = entry.arguments?.getString("vaccinationId")?.toLongOrNull()
+                AddEditVaccinationScreen(
+                    vaccinationId = vaccinationId,
+                    onSaved = {
+                        navController.navigate(Routes.Vaccinations) {
+                            popUpTo(Routes.Dashboard)
+                        }
+                    },
+                    onCancel = { navController.popBackStack() }
                 )
             }
             composable(Routes.Settings) {

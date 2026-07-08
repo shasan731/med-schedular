@@ -5,6 +5,7 @@ import androidx.room.Room
 import com.meditrack.data.local.AppDatabase
 import com.meditrack.data.repository.MedicationRepository
 import com.meditrack.data.repository.SettingsRepository
+import com.meditrack.data.repository.VaccinationRepository
 import com.meditrack.notifications.ReminderScheduler
 
 object AppGraph {
@@ -13,6 +14,8 @@ object AppGraph {
     lateinit var database: AppDatabase
         private set
     lateinit var medicationRepository: MedicationRepository
+        private set
+    lateinit var vaccinationRepository: VaccinationRepository
         private set
     lateinit var settingsRepository: SettingsRepository
         private set
@@ -31,7 +34,13 @@ object AppGraph {
             .fallbackToDestructiveMigration()
             .build()
         medicationRepository = MedicationRepository(database)
+        vaccinationRepository = VaccinationRepository(database)
         settingsRepository = SettingsRepository(appContext)
-        reminderScheduler = ReminderScheduler(appContext, medicationRepository, settingsRepository)
+        reminderScheduler = ReminderScheduler(
+            appContext,
+            medicationRepository,
+            vaccinationRepository,
+            settingsRepository
+        )
     }
 }

@@ -6,6 +6,7 @@ import com.meditrack.domain.model.FoodRelation
 import com.meditrack.domain.model.IntervalUnit
 import com.meditrack.domain.model.ScheduleType
 import com.meditrack.domain.model.TreatmentType
+import com.meditrack.domain.model.VaccinationStatus
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -51,4 +52,11 @@ class RoomConverters {
 
     @TypeConverter
     fun stringToFoodRelation(value: String?): FoodRelation? = value?.let(FoodRelation::valueOf)
+
+    @TypeConverter
+    fun vaccinationStatusToString(value: VaccinationStatus?): String? = value?.name
+
+    @TypeConverter
+    fun stringToVaccinationStatus(value: String?): VaccinationStatus? =
+        value?.let(VaccinationStatus::valueOf)
 }

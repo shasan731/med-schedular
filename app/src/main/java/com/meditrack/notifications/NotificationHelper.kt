@@ -15,6 +15,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.meditrack.MainActivity
 import com.meditrack.R
+import com.meditrack.data.local.entity.VaccinationEntity
 import com.meditrack.data.repository.DueDosePayload
 import com.meditrack.domain.model.FoodRelation
 import com.meditrack.ui.labelRes
@@ -23,6 +24,8 @@ import com.meditrack.ui.labelRes
 object NotificationHelper {
     const val CHANNEL_DOSE_REMINDERS = "dose_reminders"
     const val CHANNEL_DOSE_ALARMS = "dose_alarms"
+    // Keeps vaccination notification ids from colliding with dose notification ids.
+    private const val VACCINATION_NOTIF_OFFSET = 1_000_000L
     const val ACTION_MARK_TAKEN = "com.meditrack.action.MARK_TAKEN"
     const val ACTION_SKIP = "com.meditrack.action.SKIP"
     const val EXTRA_DOSE_EVENT_ID = "dose_event_id"
@@ -130,6 +133,44 @@ object NotificationHelper {
 
         NotificationManagerCompat.from(context)
             .notify(payload.doseEvent.id.toInt(), builder.build())
+    }
+
+    fun showVaccinationReminder(
+        context: Context,
+        vaccination: VaccinationEntity,
+        vibrationEnabled: Boolean,
+        useAlarmSound: Boolean = false
+    ) {
+        if (!canPostNotifications(context)) return
+
+        val notificationId = (vaccination.id + VACCINATION_NOTIF_OFFSET).toInt()
+        val contentIntent = PendingIntent.getActivity(
+            context,
+            notificationId,
+            Intent(context, MainActivity::class.java),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val channelId = if (useAlarmSound) CHANNEL_DOSE_ALARMS else CHANNEL_DOSE_REMINDERS
+        val builder = NotificationCompat.Builder(context, channelId)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentTitle(context.getString(R.string.notif_vaccination_title, vaccination.name))
+            .setContentIntent(contentIntent)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+
+        if (vaccination.doseLabel.isNotBlank()) {
+            builder.setContentText(vaccination.doseLabel)
+            builder.setStyle(NotificationCompat.BigTextStyle().bigText(vaccination.doseLabel))
+        }
+        if (useAlarmSound) {
+            builder.setCategory(NotificationCompat.CATEGORY_ALARM)
+        }
+        if (!vibrationEnabled) {
+            builder.setVibrate(null)
+        }
+
+        NotificationManagerCompat.from(context).notify(notificationId, builder.build())
     }
 
     fun cancelDoseNotification(context: Context, doseEventId: Long) {

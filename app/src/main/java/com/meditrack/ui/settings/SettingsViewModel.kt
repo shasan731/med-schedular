@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 class SettingsViewModel : ViewModel() {
     private val settingsRepository = AppGraph.settingsRepository
     private val medicationRepository = AppGraph.medicationRepository
+    private val vaccinationRepository = AppGraph.vaccinationRepository
     private val scheduler = AppGraph.reminderScheduler
 
     val settings: StateFlow<AppSettings> = settingsRepository.observeSettings()
@@ -67,6 +68,7 @@ class SettingsViewModel : ViewModel() {
     fun clearAllData() {
         viewModelScope.launch {
             medicationRepository.clearAllData()
+            vaccinationRepository.clearAll()
             scheduler.rescheduleMedicationReminders()
             exportJson.value = null
             message.value = AppGraph.appContext.getString(R.string.msg_cleared)

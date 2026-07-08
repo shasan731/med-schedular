@@ -357,6 +357,7 @@ Primary tabs:
 
 - Today
 - Medicines
+- Vaccines
 - Settings
 
 Current navigation uses a Material 3 app shell:
@@ -518,6 +519,28 @@ Purpose:
 - Show Fixed Course progress.
 - Show dose history.
 
+### Vaccines
+
+Files:
+
+```text
+ui/vaccination/VaccinationScreen.kt
+ui/vaccination/VaccinationViewModel.kt
+ui/vaccination/AddEditVaccinationScreen.kt
+ui/vaccination/AddEditVaccinationViewModel.kt
+data/local/entity/VaccinationEntity.kt
+data/local/dao/VaccinationDao.kt
+data/repository/VaccinationRepository.kt
+```
+
+Purpose:
+
+- Track one-off vaccinations / shots (e.g. "Covid-19 – Booster") separately from daily medications.
+- Each vaccination has a name, optional dose label, a scheduled date/time, a status (`UPCOMING`, `DONE`, `MISSED`), and an optional note.
+- The list shows upcoming and past shots ordered by date; the user marks a shot Done (or back to not-done) and can Edit or Delete it.
+- A reminder fires at the scheduled date/time via the same exact-alarm pipeline as doses (`ReminderReceiver` handles a separate `ACTION_FIRE_VACCINATION`). Overdue upcoming shots are marked `MISSED` on refresh.
+- Vaccinations are a separate Room entity (schema v4); they carry no stock or recurring schedule. Fully localized (English + Bengali).
+
 ### Settings
 
 Files:
@@ -630,7 +653,7 @@ Covered logic:
 - Dose reminders use exact alarms and fire on time, but aggressive OEM battery managers can still delay or kill background apps; disabling battery optimization is recommended.
 - There are no instrumented UI tests yet.
 - There is no database migration strategy beyond destructive migration in the MVP.
-- The current schema is at version 3 (per-schedule dose amounts in v2, medication food timing in v3), still using destructive migration.
+- The current schema is at version 4 (per-schedule dose amounts in v2, medication food timing in v3, vaccinations table in v4), still using destructive migration.
 - There is no encrypted database layer.
 - Dose history exists, but advanced analytics and charts are not implemented.
 - A basic refill (add to current stock) exists on the Medicines and Detail screens; there is no separate refill transaction history yet.

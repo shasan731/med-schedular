@@ -204,6 +204,31 @@
     <string name="notif_channel_alarm_desc">Loud alarm-style dose reminders</string>
     <string name="settings_alarm_sound">Use alarm-style alert sound</string>
 
+    <!-- Vaccinations -->
+    <string name="tab_vaccines">Vaccines</string>
+    <string name="vacc_title">Vaccines</string>
+    <string name="vacc_subtitle">Shots and boosters</string>
+    <string name="vacc_add">Add vaccine</string>
+    <string name="vacc_empty_title">No vaccines yet.</string>
+    <string name="vacc_empty_body">Add a shot or booster and we will remind you when it is due.</string>
+    <string name="vacc_mark_done">Mark done</string>
+    <string name="vacc_mark_not_done">Mark not done</string>
+    <string name="vacc_status_upcoming">Upcoming</string>
+    <string name="vacc_status_done">Done</string>
+    <string name="vacc_status_missed">Missed</string>
+    <string name="vacc_add_title">Add Vaccine</string>
+    <string name="vacc_edit_title">Edit Vaccine</string>
+    <string name="vacc_add_subtitle">Add a shot or booster and set the date to be reminded.</string>
+    <string name="vacc_field_name">Vaccine name</string>
+    <string name="vacc_field_dose_label">Which dose? (optional)</string>
+    <string name="vacc_field_dose_label_help">For example: Dose 1, Dose 2, or Booster.</string>
+    <string name="vacc_field_date">Date</string>
+    <string name="vacc_field_time">Reminder time</string>
+    <string name="vacc_field_time_help">For example 09:00 or 9:00 AM.</string>
+    <string name="vacc_field_note">Note (optional)</string>
+    <string name="vacc_val_name">Vaccine name is required.</string>
+    <string name="notif_vaccination_title">Vaccination due: %1$s</string>
+
     <!-- Enum labels -->
     <string name="status_pending">Pending</string>
     <string name="status_taken">Taken</string>

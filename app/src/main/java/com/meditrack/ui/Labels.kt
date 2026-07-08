@@ -7,6 +7,7 @@ import com.meditrack.domain.model.DoseStatus
 import com.meditrack.domain.model.FoodRelation
 import com.meditrack.domain.model.ScheduleType
 import com.meditrack.domain.model.TreatmentType
+import com.meditrack.domain.model.VaccinationStatus
 import com.meditrack.ui.addedit.CourseDurationUnit
 
 /**
@@ -41,6 +42,13 @@ fun ThemeMode.labelRes(): Int = when (this) {
     ThemeMode.SYSTEM -> R.string.theme_system
     ThemeMode.LIGHT -> R.string.theme_light
     ThemeMode.DARK -> R.string.theme_dark
+}
+
+@StringRes
+fun VaccinationStatus.labelRes(): Int = when (this) {
+    VaccinationStatus.UPCOMING -> R.string.vacc_status_upcoming
+    VaccinationStatus.DONE -> R.string.vacc_status_done
+    VaccinationStatus.MISSED -> R.string.vacc_status_missed
 }
 
 @StringRes

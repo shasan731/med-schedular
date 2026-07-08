@@ -204,6 +204,31 @@
     <string name="notif_channel_alarm_desc">উচ্চ শব্দের অ্যালার্ম-ধরনের ডোজ অনুস্মারক</string>
     <string name="settings_alarm_sound">অ্যালার্ম-ধরনের শব্দ ব্যবহার করুন</string>
 
+    <!-- Vaccinations -->
+    <string name="tab_vaccines">টিকা</string>
+    <string name="vacc_title">টিকা</string>
+    <string name="vacc_subtitle">টিকা ও বুস্টার</string>
+    <string name="vacc_add">টিকা যোগ করুন</string>
+    <string name="vacc_empty_title">এখনও কোনো টিকা নেই।</string>
+    <string name="vacc_empty_body">একটি টিকা বা বুস্টার যোগ করুন, সময় হলে আমরা মনে করিয়ে দেব।</string>
+    <string name="vacc_mark_done">সম্পন্ন চিহ্নিত করুন</string>
+    <string name="vacc_mark_not_done">অসম্পন্ন চিহ্নিত করুন</string>
+    <string name="vacc_status_upcoming">আসন্ন</string>
+    <string name="vacc_status_done">সম্পন্ন</string>
+    <string name="vacc_status_missed">মিস হয়েছে</string>
+    <string name="vacc_add_title">টিকা যোগ করুন</string>
+    <string name="vacc_edit_title">টিকা সম্পাদনা করুন</string>
+    <string name="vacc_add_subtitle">একটি টিকা বা বুস্টার যোগ করুন এবং মনে করিয়ে দেওয়ার তারিখ নির্ধারণ করুন।</string>
+    <string name="vacc_field_name">টিকার নাম</string>
+    <string name="vacc_field_dose_label">কোন ডোজ? (ঐচ্ছিক)</string>
+    <string name="vacc_field_dose_label_help">যেমন: ডোজ ১, ডোজ ২, বা বুস্টার।</string>
+    <string name="vacc_field_date">তারিখ</string>
+    <string name="vacc_field_time">অনুস্মারকের সময়</string>
+    <string name="vacc_field_time_help">যেমন 09:00 বা 9:00 AM।</string>
+    <string name="vacc_field_note">নোট (ঐচ্ছিক)</string>
+    <string name="vacc_val_name">টিকার নাম আবশ্যক।</string>
+    <string name="notif_vaccination_title">টিকার সময়: %1$s</string>
+
     <!-- Enum labels -->
     <string name="status_pending">অপেক্ষমাণ</string>
     <string name="status_taken">খাওয়া হয়েছে</string>
