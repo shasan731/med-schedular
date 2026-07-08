@@ -10,6 +10,8 @@ import com.meditrack.domain.InventoryCalculator
 import com.meditrack.domain.ScheduleCalculator
 import com.meditrack.domain.model.IntervalUnit
 import com.meditrack.domain.model.ScheduleType
+import androidx.annotation.StringRes
+import com.meditrack.R
 import com.meditrack.domain.model.TreatmentType
 import com.meditrack.ui.stockText
 import com.meditrack.utils.ValidationUtils
@@ -74,10 +76,13 @@ class AddEditMedicationViewModel(
         }
     }
 
+    private fun str(@StringRes id: Int, vararg args: Any): String =
+        AppGraph.appContext.getString(id, *args)
+
     private fun parseForm(form: MedicationFormState): ParsedMedication {
         val normalized = form.normalized()
         val errors = mutableListOf<String>()
-        val startDate = parseDate(normalized.startDate, "Start date", errors)
+        val startDate = parseDate(normalized.startDate, errors)
         val currentStock = normalized.currentStock.toDoubleOrNull()
         val lowStockThreshold = normalized.lowStockThresholdDays.toDoubleOrNull()
         val scheduleParse = parseSchedules(normalized)
@@ -87,10 +92,10 @@ class AddEditMedicationViewModel(
             ?: 0.0
         val endDate = resolveEndDate(normalized, startDate, errors)
 
-        if (currentStock == null) errors += "Current stock must be a number."
-        if (lowStockThreshold == null) errors += "Low-stock reminder days must be a number."
+        if (currentStock == null) errors += str(R.string.val_stock_number)
+        if (lowStockThreshold == null) errors += str(R.string.val_lowstock_number)
         if (startDate != null && endDate != null && endDate.isBefore(startDate)) {
-            errors += "End date must be on or after the start date."
+            errors += str(R.string.val_end_after_start)
         }
         errors += scheduleParse.errors
 
@@ -114,7 +119,7 @@ class AddEditMedicationViewModel(
             lowStockThresholdDays = lowStockThreshold ?: 1.0
         )
 
-        errors += ValidationUtils.validateMedication(medication, schedules)
+        errors += ValidationUtils.validateMedication(medication, schedules).map { str(it) }
         return ParsedMedication(
             medication = medication,
             schedules = schedules,
@@ -128,12 +133,12 @@ class AddEditMedicationViewModel(
         errors: MutableList<String>
     ): LocalDate? {
         if (form.treatmentType == TreatmentType.CONTINUOUS) {
-            return if (form.endDate.isBlank()) null else parseDate(form.endDate, "End date", errors)
+            return if (form.endDate.isBlank()) null else parseDate(form.endDate, errors)
         }
         if (startDate == null) return null
         val duration = form.courseDurationValue.toIntOrNull()
         if (duration == null || duration <= 0) {
-            errors += "Fixed Course needs a course length such as 7 days, 2 weeks, or 1 month."
+            errors += str(R.string.val_course_length_required)
             return null
         }
         return calculateEndDate(startDate, duration, form.courseDurationUnit)
@@ -149,15 +154,15 @@ class AddEditMedicationViewModel(
 
     private fun parsePrescriptionPattern(form: MedicationFormState): ParsedSchedules {
         val entries = listOf(
-            PrescriptionSlot("Morning", "08:00", form.morningDose),
-            PrescriptionSlot("Afternoon", "14:00", form.afternoonDose),
-            PrescriptionSlot("Night", "22:00", form.nightDose)
+            PrescriptionSlot(R.string.group_morning, "08:00", form.morningDose),
+            PrescriptionSlot(R.string.group_afternoon, "14:00", form.afternoonDose),
+            PrescriptionSlot(R.string.group_night, "22:00", form.nightDose)
         )
         val errors = mutableListOf<String>()
         val schedules = entries.mapNotNull { slot ->
             val dose = slot.value.toDoubleOrNull()
             if (dose == null || dose < 0.0) {
-                errors += "${slot.label} dose must be 0 or greater."
+                errors += str(R.string.val_slot_nonneg, str(slot.labelRes))
                 null
             } else if (dose == 0.0) {
                 null
@@ -171,7 +176,7 @@ class AddEditMedicationViewModel(
             }
         }
         if (schedules.isEmpty()) {
-            errors += "Enter at least one dose in Morning, Afternoon, or Night."
+            errors += str(R.string.val_enter_one_dose)
         }
         return ParsedSchedules(schedules = schedules, errors = errors)
     }
@@ -180,7 +185,7 @@ class AddEditMedicationViewModel(
         val doseAmount = form.doseAmount.toDoubleOrNull()
         val errors = mutableListOf<String>()
         if (doseAmount == null || doseAmount <= 0.0) {
-            errors += "Dose amount must be greater than 0."
+            errors += str(R.string.val_dose_positive)
         }
 
         return when (form.scheduleType) {
@@ -200,7 +205,7 @@ class AddEditMedicationViewModel(
                         )
                     },
                     errors = errors + invalid.map {
-                        "Reminder time \"$it\" is not valid. Use a time like 08:00 or 8:00 AM."
+                        str(R.string.val_reminder_time_invalid, it)
                     }
                 )
             }
@@ -213,7 +218,7 @@ class AddEditMedicationViewModel(
                 val normalizedTime = firstTimeInput.takeIf { it.isNotBlank() }
                     ?.let { ScheduleCalculator.normalizeTimeInput(it) }
                 if (firstTimeInput.isNotBlank() && normalizedTime == null) {
-                    errors += "Reminder time \"$firstTimeInput\" is not valid. Use a time like 09:00 or 9:00 AM."
+                    errors += str(R.string.val_reminder_time_invalid, firstTimeInput)
                 }
 
                 val daysOfWeek = form.daysOfWeek.trim()
@@ -221,13 +226,13 @@ class AddEditMedicationViewModel(
                     val parsedDays = InventoryCalculator.parseDaysOfWeek(daysOfWeek)
                     val tokens = daysOfWeek.split(",").map { it.trim() }.filter { it.isNotBlank() }
                     if (tokens.isEmpty() || parsedDays.isEmpty() || parsedDays.size != tokens.size) {
-                        errors += "Weekly schedule days must be 1-7 or names like Mon, Wed, Fri."
+                        errors += str(R.string.val_weekly_days_invalid)
                     }
                 }
 
                 val dayOfMonth = form.dayOfMonth.toIntOrNull()
                 if (form.scheduleType == ScheduleType.MONTHLY_INTERVAL && (dayOfMonth == null || dayOfMonth !in 1..31)) {
-                    errors += "Monthly day must be between 1 and 31."
+                    errors += str(R.string.val_monthly_day_invalid)
                 }
 
                 ParsedSchedules(
@@ -255,9 +260,9 @@ class AddEditMedicationViewModel(
         }
     }
 
-    private fun parseDate(value: String, label: String, errors: MutableList<String>): LocalDate? {
+    private fun parseDate(value: String, errors: MutableList<String>): LocalDate? {
         return runCatching { LocalDate.parse(value.trim()) }.getOrElse {
-            errors += "$label must use YYYY-MM-DD."
+            errors += str(R.string.val_date_invalid)
             null
         }
     }
@@ -455,7 +460,7 @@ private fun Double.cleanNumber(): String {
 }
 
 private data class PrescriptionSlot(
-    val label: String,
+    @StringRes val labelRes: Int,
     val time: String,
     val value: String
 )

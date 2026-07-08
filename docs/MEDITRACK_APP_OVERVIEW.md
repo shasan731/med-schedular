@@ -535,8 +535,8 @@ Localization:
 
 - The app ships English (`res/values/strings.xml`) and Bengali (`res/values-bn/strings.xml`) string resources.
 - Language switching uses AndroidX per-app locales via `AppCompatDelegate.setApplicationLocales`. The choice is persisted (by AppCompat on Android 12 and below, by the system on Android 13+) and applied app-wide; changing it recreates the activity so the UI reloads in the new language.
-- Enum labels map to string resources in `ui/Labels.kt` so the domain enums stay resource-free and unit-testable.
-- Known gaps: validation error messages (`ValidationUtils`) and the schedule summary (`ScheduleCalculator`) are still English, and on Android 12 and below a few view-model-generated strings may only fully switch after the app restarts.
+- Enum labels map to string resources in `ui/Labels.kt`, and the schedule summary is built by `ui/ScheduleSummary.kt`, so the domain enums and `ScheduleCalculator` stay resource-free and unit-testable. `ValidationUtils` returns string-resource ids (not resolved text) for the same reason.
+- Validation messages and the schedule summary are localized. Known gap: on Android 12 and below a few view-model-generated strings may only fully switch to the new language after the app restarts (Android 13+ switches immediately).
 
 Export behavior:
 

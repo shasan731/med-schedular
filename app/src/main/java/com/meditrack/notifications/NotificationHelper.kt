@@ -7,6 +7,8 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.media.AudioAttributes
+import android.media.RingtoneManager
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -31,6 +33,14 @@ object NotificationHelper {
             ).apply {
                 description = context.getString(R.string.notif_channel_desc)
                 enableVibration(true)
+                // Explicitly play a sound (heads-up importance already implies one, but this makes
+                // the reminder audible even if the default behaviour changes).
+                val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+                val audioAttributes = AudioAttributes.Builder()
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                    .build()
+                setSound(soundUri, audioAttributes)
             }
             context.getSystemService(NotificationManager::class.java)
                 .createNotificationChannel(channel)

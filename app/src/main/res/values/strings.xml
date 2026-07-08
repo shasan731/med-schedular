@@ -163,6 +163,34 @@
     <string name="notif_action_taken">Mark Taken</string>
     <string name="notif_action_skip">Skip</string>
 
+    <!-- Schedule summary -->
+    <string name="sched_summary_none">No active schedule</string>
+    <string name="sched_summary_specific">Specific times: %1$s</string>
+    <string name="sched_summary_hourly">Every %1$d hour(s)</string>
+    <string name="sched_summary_daily">Every %1$d day(s)</string>
+    <string name="sched_summary_weekly">Every %1$d week(s) on %2$s</string>
+    <string name="sched_summary_monthly">Every %1$d month(s) on day %2$d</string>
+    <string name="sched_summary_selected_days">selected day(s)</string>
+
+    <!-- Validation messages -->
+    <string name="val_name_required">Medicine name is required.</string>
+    <string name="val_dose_positive">Dose amount must be greater than 0.</string>
+    <string name="val_stock_negative">Current stock cannot be negative.</string>
+    <string name="val_fixed_needs_end">Fixed Course medicine needs an end date.</string>
+    <string name="val_schedule_required">Add at least one dose time.</string>
+    <string name="val_specific_time_required">Specific-time schedules need at least one reminder time.</string>
+    <string name="val_interval_invalid">Interval schedules need a valid interval value and unit.</string>
+    <string name="val_stock_number">Current stock must be a number.</string>
+    <string name="val_lowstock_number">Low-stock reminder days must be a number.</string>
+    <string name="val_end_after_start">End date must be on or after the start date.</string>
+    <string name="val_course_length_required">Fixed Course needs a course length, such as 7 days, 2 weeks, or 1 month.</string>
+    <string name="val_date_invalid">Please choose a valid date.</string>
+    <string name="val_slot_nonneg">%1$s dose must be 0 or greater.</string>
+    <string name="val_enter_one_dose">Enter at least one dose in Morning, Afternoon, or Night.</string>
+    <string name="val_reminder_time_invalid">Reminder time \"%1$s\" is not valid. Use a time like 08:00 or 8:00 AM.</string>
+    <string name="val_weekly_days_invalid">Weekly days must be 1-7 or names like Mon, Wed, Fri.</string>
+    <string name="val_monthly_day_invalid">Monthly day must be between 1 and 31.</string>
+
     <!-- Enum labels -->
     <string name="status_pending">Pending</string>
     <string name="status_taken">Taken</string>

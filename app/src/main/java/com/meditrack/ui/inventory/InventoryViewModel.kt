@@ -6,8 +6,8 @@ import com.meditrack.AppGraph
 import com.meditrack.data.local.entity.MedicationEntity
 import com.meditrack.domain.InventoryCalculator
 import com.meditrack.domain.MedicationSummary
-import com.meditrack.domain.ScheduleCalculator
 import com.meditrack.domain.model.DoseStatus
+import com.meditrack.ui.scheduleSummaryText
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
@@ -35,7 +35,7 @@ class InventoryViewModel : ViewModel() {
                 )
                 InventoryItemUi(
                     medication = item.medication,
-                    scheduleSummary = ScheduleCalculator.scheduleSummary(item.schedules),
+                    scheduleSummary = scheduleSummaryText(AppGraph.appContext, item.schedules),
                     summary = summary
                 )
             }

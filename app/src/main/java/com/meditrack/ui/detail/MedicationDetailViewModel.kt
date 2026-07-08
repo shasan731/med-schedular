@@ -8,8 +8,8 @@ import com.meditrack.data.local.entity.DoseEventEntity
 import com.meditrack.data.local.entity.MedicationEntity
 import com.meditrack.domain.InventoryCalculator
 import com.meditrack.domain.MedicationSummary
-import com.meditrack.domain.ScheduleCalculator
 import com.meditrack.domain.model.DoseStatus
+import com.meditrack.ui.scheduleSummaryText
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
@@ -36,7 +36,7 @@ class MedicationDetailViewModel(
             val takenCount = history.count { it.status == DoseStatus.TAKEN }
             MedicationDetailUiState(
                 medication = medicationWithSchedules.medication,
-                scheduleSummary = ScheduleCalculator.scheduleSummary(medicationWithSchedules.schedules),
+                scheduleSummary = scheduleSummaryText(AppGraph.appContext, medicationWithSchedules.schedules),
                 summary = InventoryCalculator.buildSummary(
                     medication = medicationWithSchedules.medication,
                     schedules = medicationWithSchedules.schedules,

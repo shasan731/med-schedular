@@ -163,6 +163,34 @@
     <string name="notif_action_taken">খেয়েছি চিহ্নিত করুন</string>
     <string name="notif_action_skip">বাদ দিন</string>
 
+    <!-- Schedule summary -->
+    <string name="sched_summary_none">কোনো সক্রিয় সময়সূচী নেই</string>
+    <string name="sched_summary_specific">নির্দিষ্ট সময়: %1$s</string>
+    <string name="sched_summary_hourly">প্রতি %1$d ঘণ্টা অন্তর</string>
+    <string name="sched_summary_daily">প্রতি %1$d দিন অন্তর</string>
+    <string name="sched_summary_weekly">প্রতি %1$d সপ্তাহ অন্তর, %2$s</string>
+    <string name="sched_summary_monthly">প্রতি %1$d মাস অন্তর, %2$d তারিখে</string>
+    <string name="sched_summary_selected_days">নির্বাচিত দিন</string>
+
+    <!-- Validation messages -->
+    <string name="val_name_required">ওষুধের নাম আবশ্যক।</string>
+    <string name="val_dose_positive">ডোজের পরিমাণ ০-এর বেশি হতে হবে।</string>
+    <string name="val_stock_negative">বর্তমান স্টক ঋণাত্মক হতে পারে না।</string>
+    <string name="val_fixed_needs_end">নির্দিষ্ট কোর্সের ওষুধের একটি শেষ তারিখ প্রয়োজন।</string>
+    <string name="val_schedule_required">অন্তত একটি ডোজের সময় যোগ করুন।</string>
+    <string name="val_specific_time_required">নির্দিষ্ট-সময়ের সময়সূচীতে অন্তত একটি অনুস্মারকের সময় প্রয়োজন।</string>
+    <string name="val_interval_invalid">ব্যবধানের সময়সূচীতে সঠিক ব্যবধান মান ও একক প্রয়োজন।</string>
+    <string name="val_stock_number">বর্তমান স্টক একটি সংখ্যা হতে হবে।</string>
+    <string name="val_lowstock_number">স্টক-কম অনুস্মারকের দিন একটি সংখ্যা হতে হবে।</string>
+    <string name="val_end_after_start">শেষ তারিখ শুরুর তারিখে বা তার পরে হতে হবে।</string>
+    <string name="val_course_length_required">নির্দিষ্ট কোর্সের জন্য একটি দৈর্ঘ্য প্রয়োজন, যেমন ৭ দিন, ২ সপ্তাহ বা ১ মাস।</string>
+    <string name="val_date_invalid">একটি সঠিক তারিখ বাছুন।</string>
+    <string name="val_slot_nonneg">%1$s ডোজ ০ বা তার বেশি হতে হবে।</string>
+    <string name="val_enter_one_dose">সকাল, দুপুর বা রাতে অন্তত একটি ডোজ লিখুন।</string>
+    <string name="val_reminder_time_invalid">অনুস্মারকের সময় \"%1$s\" সঠিক নয়। 08:00 বা 8:00 AM এর মতো সময় ব্যবহার করুন।</string>
+    <string name="val_weekly_days_invalid">সাপ্তাহিক দিন ১-৭ অথবা Mon, Wed, Fri এর মতো নাম হতে হবে।</string>
+    <string name="val_monthly_day_invalid">মাসের দিন ১ থেকে ৩১ এর মধ্যে হতে হবে।</string>
+
     <!-- Enum labels -->
     <string name="status_pending">অপেক্ষমাণ</string>
     <string name="status_taken">খাওয়া হয়েছে</string>
