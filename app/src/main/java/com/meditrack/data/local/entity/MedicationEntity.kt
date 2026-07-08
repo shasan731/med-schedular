@@ -2,6 +2,7 @@ package com.meditrack.data.local.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.meditrack.domain.model.FoodRelation
 import com.meditrack.domain.model.TreatmentType
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -18,6 +19,7 @@ data class MedicationEntity(
     val endDate: LocalDate?,
     val currentStock: Double,
     val totalRequiredStock: Double?,
+    val foodRelation: FoodRelation = FoodRelation.NONE,
     val lowStockThresholdDays: Double = 1.0,
     val isActive: Boolean = true,
     val createdAt: LocalDateTime = LocalDateTime.now(),

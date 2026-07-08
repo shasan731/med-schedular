@@ -191,6 +191,19 @@
     <string name="val_weekly_days_invalid">সাপ্তাহিক দিন ১-৭ অথবা Mon, Wed, Fri এর মতো নাম হতে হবে।</string>
     <string name="val_monthly_day_invalid">মাসের দিন ১ থেকে ৩১ এর মধ্যে হতে হবে।</string>
 
+    <!-- Food timing -->
+    <string name="food_section_label">কখন খাবেন (খাবারের সাথে)</string>
+    <string name="food_any">যেকোনো সময়</string>
+    <string name="food_before">খাবারের আগে</string>
+    <string name="food_after">খাবারের পরে</string>
+    <string name="food_with">খাবারের সাথে</string>
+    <string name="detail_food">কখন নেবেন: %1$s</string>
+
+    <!-- Alarm-style sound -->
+    <string name="notif_channel_alarm_name">ডোজ অ্যালার্ম</string>
+    <string name="notif_channel_alarm_desc">উচ্চ শব্দের অ্যালার্ম-ধরনের ডোজ অনুস্মারক</string>
+    <string name="settings_alarm_sound">অ্যালার্ম-ধরনের শব্দ ব্যবহার করুন</string>
+
     <!-- Enum labels -->
     <string name="status_pending">অপেক্ষমাণ</string>
     <string name="status_taken">খাওয়া হয়েছে</string>

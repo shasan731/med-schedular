@@ -191,6 +191,19 @@
     <string name="val_weekly_days_invalid">Weekly days must be 1-7 or names like Mon, Wed, Fri.</string>
     <string name="val_monthly_day_invalid">Monthly day must be between 1 and 31.</string>
 
+    <!-- Food timing -->
+    <string name="food_section_label">When to take it (with food)</string>
+    <string name="food_any">Any time</string>
+    <string name="food_before">Before food</string>
+    <string name="food_after">After food</string>
+    <string name="food_with">With food</string>
+    <string name="detail_food">When to take: %1$s</string>
+
+    <!-- Alarm-style sound -->
+    <string name="notif_channel_alarm_name">Dose alarms</string>
+    <string name="notif_channel_alarm_desc">Loud alarm-style dose reminders</string>
+    <string name="settings_alarm_sound">Use alarm-style alert sound</string>
+
     <!-- Enum labels -->
     <string name="status_pending">Pending</string>
     <string name="status_taken">Taken</string>

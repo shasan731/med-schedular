@@ -1,6 +1,7 @@
 package com.meditrack.data.local.entity
 
 import com.meditrack.domain.model.DoseStatus
+import com.meditrack.domain.model.FoodRelation
 import com.meditrack.domain.model.TreatmentType
 import java.time.LocalDateTime
 
@@ -18,7 +19,8 @@ data class DoseEventWithMedication(
     val doseUnit: String,
     val currentStock: Double,
     val lowStockThresholdDays: Double,
-    val treatmentType: TreatmentType
+    val treatmentType: TreatmentType,
+    val foodRelation: FoodRelation = FoodRelation.NONE
 ) {
     fun asDoseEvent(): DoseEventEntity = DoseEventEntity(
         id = id,

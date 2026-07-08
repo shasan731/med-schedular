@@ -29,7 +29,8 @@ interface DoseEventDao {
             medications.doseUnit AS doseUnit,
             medications.currentStock AS currentStock,
             medications.lowStockThresholdDays AS lowStockThresholdDays,
-            medications.treatmentType AS treatmentType
+            medications.treatmentType AS treatmentType,
+            medications.foodRelation AS foodRelation
         FROM dose_events
         INNER JOIN medications ON medications.id = dose_events.medicationId
         WHERE dose_events.scheduledDateTime >= :start

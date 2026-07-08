@@ -8,6 +8,7 @@ import com.meditrack.data.local.entity.MedicationEntity
 import com.meditrack.data.local.entity.MedicationScheduleEntity
 import com.meditrack.domain.InventoryCalculator
 import com.meditrack.domain.ScheduleCalculator
+import com.meditrack.domain.model.FoodRelation
 import com.meditrack.domain.model.IntervalUnit
 import com.meditrack.domain.model.ScheduleType
 import androidx.annotation.StringRes
@@ -116,6 +117,7 @@ class AddEditMedicationViewModel(
             endDate = endDate,
             currentStock = currentStock ?: 0.0,
             totalRequiredStock = null,
+            foodRelation = normalized.foodRelation,
             lowStockThresholdDays = lowStockThreshold ?: 1.0
         )
 
@@ -292,6 +294,7 @@ data class MedicationFormState(
     val doseUnit: String,
     val currentStock: String,
     val treatmentType: TreatmentType,
+    val foodRelation: FoodRelation,
     val startDate: String,
     val endDate: String,
     val courseDurationValue: String,
@@ -373,6 +376,7 @@ data class MedicationFormState(
                 doseUnit = "tablet",
                 currentStock = "0",
                 treatmentType = TreatmentType.CONTINUOUS,
+                foodRelation = FoodRelation.NONE,
                 startDate = today,
                 endDate = "",
                 courseDurationValue = "7",
@@ -413,6 +417,7 @@ data class MedicationFormState(
                 doseUnit = medication.doseUnit,
                 currentStock = medication.currentStock.cleanNumber(),
                 treatmentType = medication.treatmentType,
+                foodRelation = medication.foodRelation,
                 startDate = medication.startDate.toString(),
                 endDate = medication.endDate?.toString().orEmpty(),
                 courseDurationValue = durationDays.toString(),

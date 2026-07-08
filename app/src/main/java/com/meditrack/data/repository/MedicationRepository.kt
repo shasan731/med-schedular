@@ -260,6 +260,7 @@ class MedicationRepository(
             .put("endDate", medication.endDate?.toString())
             .put("currentStock", medication.currentStock)
             .put("totalRequiredStock", medication.totalRequiredStock)
+            .put("foodRelation", medication.foodRelation.name)
             .put("lowStockThresholdDays", medication.lowStockThresholdDays)
             .put("isActive", medication.isActive)
             .put("schedules", JSONArray(schedules.map { it.toJson() }))

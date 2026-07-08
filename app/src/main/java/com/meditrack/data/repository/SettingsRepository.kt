@@ -26,6 +26,11 @@ class SettingsRepository(context: Context) {
         state.value = load()
     }
 
+    fun updateAlarmSoundEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_ALARM_SOUND_ENABLED, enabled).apply()
+        state.value = load()
+    }
+
     fun updateThemeMode(mode: ThemeMode) {
         prefs.edit().putString(KEY_THEME_MODE, mode.name).apply()
         state.value = load()
@@ -36,6 +41,7 @@ class SettingsRepository(context: Context) {
             defaultLowStockThresholdDays = prefs.getFloat(KEY_LOW_STOCK_DAYS, 1f).toDouble(),
             notificationsEnabled = prefs.getBoolean(KEY_NOTIFICATIONS_ENABLED, true),
             vibrationEnabled = prefs.getBoolean(KEY_VIBRATION_ENABLED, true),
+            alarmSoundEnabled = prefs.getBoolean(KEY_ALARM_SOUND_ENABLED, false),
             themeMode = prefs.getString(KEY_THEME_MODE, ThemeMode.SYSTEM.name)
                 ?.let { value -> runCatching { ThemeMode.valueOf(value) }.getOrNull() }
                 ?: ThemeMode.SYSTEM
@@ -46,6 +52,7 @@ class SettingsRepository(context: Context) {
         const val KEY_LOW_STOCK_DAYS = "low_stock_days"
         const val KEY_NOTIFICATIONS_ENABLED = "notifications_enabled"
         const val KEY_VIBRATION_ENABLED = "vibration_enabled"
+        const val KEY_ALARM_SOUND_ENABLED = "alarm_sound_enabled"
         const val KEY_THEME_MODE = "theme_mode"
     }
 }
@@ -54,6 +61,7 @@ data class AppSettings(
     val defaultLowStockThresholdDays: Double,
     val notificationsEnabled: Boolean,
     val vibrationEnabled: Boolean,
+    val alarmSoundEnabled: Boolean,
     val themeMode: ThemeMode
 )
 

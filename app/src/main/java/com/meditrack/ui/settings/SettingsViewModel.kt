@@ -44,6 +44,10 @@ class SettingsViewModel : ViewModel() {
         settingsRepository.updateVibrationEnabled(enabled)
     }
 
+    fun setAlarmSoundEnabled(enabled: Boolean) {
+        settingsRepository.updateAlarmSoundEnabled(enabled)
+    }
+
     fun setThemeMode(mode: ThemeMode) {
         settingsRepository.updateThemeMode(mode)
     }

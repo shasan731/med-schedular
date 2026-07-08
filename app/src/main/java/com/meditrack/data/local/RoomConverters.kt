@@ -2,6 +2,7 @@ package com.meditrack.data.local
 
 import androidx.room.TypeConverter
 import com.meditrack.domain.model.DoseStatus
+import com.meditrack.domain.model.FoodRelation
 import com.meditrack.domain.model.IntervalUnit
 import com.meditrack.domain.model.ScheduleType
 import com.meditrack.domain.model.TreatmentType
@@ -44,4 +45,10 @@ class RoomConverters {
 
     @TypeConverter
     fun stringToDoseStatus(value: String?): DoseStatus? = value?.let(DoseStatus::valueOf)
+
+    @TypeConverter
+    fun foodRelationToString(value: FoodRelation?): String? = value?.name
+
+    @TypeConverter
+    fun stringToFoodRelation(value: String?): FoodRelation? = value?.let(FoodRelation::valueOf)
 }

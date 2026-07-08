@@ -4,6 +4,7 @@ import androidx.annotation.StringRes
 import com.meditrack.R
 import com.meditrack.data.repository.ThemeMode
 import com.meditrack.domain.model.DoseStatus
+import com.meditrack.domain.model.FoodRelation
 import com.meditrack.domain.model.ScheduleType
 import com.meditrack.domain.model.TreatmentType
 import com.meditrack.ui.addedit.CourseDurationUnit
@@ -40,6 +41,14 @@ fun ThemeMode.labelRes(): Int = when (this) {
     ThemeMode.SYSTEM -> R.string.theme_system
     ThemeMode.LIGHT -> R.string.theme_light
     ThemeMode.DARK -> R.string.theme_dark
+}
+
+@StringRes
+fun FoodRelation.labelRes(): Int = when (this) {
+    FoodRelation.NONE -> R.string.food_any
+    FoodRelation.BEFORE_FOOD -> R.string.food_before
+    FoodRelation.AFTER_FOOD -> R.string.food_after
+    FoodRelation.WITH_FOOD -> R.string.food_with
 }
 
 @StringRes

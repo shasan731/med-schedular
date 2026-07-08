@@ -34,7 +34,8 @@ class ReminderReceiver : BroadcastReceiver() {
                 NotificationHelper.showDoseReminder(
                     context = context,
                     payload = payload,
-                    vibrationEnabled = settings.vibrationEnabled
+                    vibrationEnabled = settings.vibrationEnabled,
+                    useAlarmSound = settings.alarmSoundEnabled
                 )
             } finally {
                 pendingResult.finish()

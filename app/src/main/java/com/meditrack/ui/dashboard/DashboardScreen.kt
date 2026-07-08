@@ -36,6 +36,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.meditrack.R
 import com.meditrack.data.local.entity.DoseEventWithMedication
 import com.meditrack.domain.model.DoseStatus
+import com.meditrack.domain.model.FoodRelation
 import com.meditrack.ui.components.BasicCard
 import com.meditrack.ui.components.ScreenHeader
 import com.meditrack.ui.components.StatusBadge
@@ -260,6 +261,14 @@ private fun DoseRow(
                 StockStatus.LOW -> StatusBadge(text = stringResource(R.string.badge_low_stock), color = Color(0xFFB54708))
                 StockStatus.OK -> Unit
             }
+        }
+
+        if (dose.foodRelation != FoodRelation.NONE) {
+            Text(
+                text = stringResource(dose.foodRelation.labelRes()),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.secondary
+            )
         }
 
         if (dose.status == DoseStatus.PENDING || dose.status == DoseStatus.MISSED) {

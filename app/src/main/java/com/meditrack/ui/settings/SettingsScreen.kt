@@ -167,6 +167,11 @@ fun SettingsScreen(
                         checked = settings.vibrationEnabled,
                         onCheckedChange = viewModel::setVibrationEnabled
                     )
+                    SettingSwitchRow(
+                        label = stringResource(R.string.settings_alarm_sound),
+                        checked = settings.alarmSoundEnabled,
+                        onCheckedChange = viewModel::setAlarmSoundEnabled
+                    )
                 }
             }
         }

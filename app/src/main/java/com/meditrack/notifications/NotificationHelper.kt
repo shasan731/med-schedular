@@ -16,17 +16,23 @@ import androidx.core.content.ContextCompat
 import com.meditrack.MainActivity
 import com.meditrack.R
 import com.meditrack.data.repository.DueDosePayload
+import com.meditrack.domain.model.FoodRelation
+import com.meditrack.ui.labelRes
 
 
 object NotificationHelper {
     const val CHANNEL_DOSE_REMINDERS = "dose_reminders"
+    const val CHANNEL_DOSE_ALARMS = "dose_alarms"
     const val ACTION_MARK_TAKEN = "com.meditrack.action.MARK_TAKEN"
     const val ACTION_SKIP = "com.meditrack.action.SKIP"
     const val EXTRA_DOSE_EVENT_ID = "dose_event_id"
 
     fun createChannels(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
+            val manager = context.getSystemService(NotificationManager::class.java)
+
+            // Standard reminder channel: default notification sound.
+            val reminderChannel = NotificationChannel(
                 CHANNEL_DOSE_REMINDERS,
                 context.getString(R.string.notif_channel_name),
                 NotificationManager.IMPORTANCE_HIGH
@@ -35,22 +41,44 @@ object NotificationHelper {
                 enableVibration(true)
                 // Explicitly play a sound (heads-up importance already implies one, but this makes
                 // the reminder audible even if the default behaviour changes).
-                val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-                val audioAttributes = AudioAttributes.Builder()
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                    .setUsage(AudioAttributes.USAGE_NOTIFICATION)
-                    .build()
-                setSound(soundUri, audioAttributes)
+                setSound(
+                    RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION),
+                    AudioAttributes.Builder()
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                        .build()
+                )
             }
-            context.getSystemService(NotificationManager::class.java)
-                .createNotificationChannel(channel)
+
+            // Alarm channel: louder, alarm-stream ringtone for users who want an alarm-style alert.
+            val alarmChannel = NotificationChannel(
+                CHANNEL_DOSE_ALARMS,
+                context.getString(R.string.notif_channel_alarm_name),
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = context.getString(R.string.notif_channel_alarm_desc)
+                enableVibration(true)
+                val alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                    ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+                setSound(
+                    alarmSound,
+                    AudioAttributes.Builder()
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .setUsage(AudioAttributes.USAGE_ALARM)
+                        .build()
+                )
+            }
+
+            manager.createNotificationChannel(reminderChannel)
+            manager.createNotificationChannel(alarmChannel)
         }
     }
 
     fun showDoseReminder(
         context: Context,
         payload: DueDosePayload,
-        vibrationEnabled: Boolean
+        vibrationEnabled: Boolean,
+        useAlarmSound: Boolean = false
     ) {
         if (!canPostNotifications(context)) return
 
@@ -74,17 +102,28 @@ object NotificationHelper {
             requestOffset = 20_000
         )
 
-        val builder = NotificationCompat.Builder(context, CHANNEL_DOSE_REMINDERS)
+        val foodRelation = payload.medication.foodRelation
+        val body = if (foodRelation != FoodRelation.NONE) {
+            "${payload.medication.dosageInstruction}\n${context.getString(foodRelation.labelRes())}"
+        } else {
+            payload.medication.dosageInstruction
+        }
+
+        val channelId = if (useAlarmSound) CHANNEL_DOSE_ALARMS else CHANNEL_DOSE_REMINDERS
+        val builder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle(context.getString(R.string.notif_title, payload.medication.name))
-            .setContentText(payload.medication.dosageInstruction)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(payload.medication.dosageInstruction))
+            .setContentText(body)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
             .setContentIntent(contentIntent)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
             .addAction(0, context.getString(R.string.notif_action_taken), takenIntent)
             .addAction(0, context.getString(R.string.notif_action_skip), skipIntent)
 
+        if (useAlarmSound) {
+            builder.setCategory(NotificationCompat.CATEGORY_ALARM)
+        }
         if (!vibrationEnabled) {
             builder.setVibrate(null)
         }

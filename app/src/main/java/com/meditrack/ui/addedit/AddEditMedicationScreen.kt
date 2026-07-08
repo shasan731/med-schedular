@@ -39,6 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.meditrack.domain.model.FoodRelation
 import com.meditrack.domain.model.ScheduleType
 import com.meditrack.domain.model.TreatmentType
 import com.meditrack.ui.components.BasicCard
@@ -163,6 +164,28 @@ private fun MedicineSection(
                 value = state.dosageInstruction,
                 supporting = stringResource(R.string.field_note_help)
             ) { value -> update { it.copy(dosageInstruction = value) } }
+
+            Text(
+                stringResource(R.string.food_section_label),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold
+            )
+            val foodOptions = FoodRelation.entries
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                foodOptions.chunked(2).forEach { rowOptions ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        rowOptions.forEach { option ->
+                            TreatmentButton(
+                                label = stringResource(option.labelRes()),
+                                selected = state.foodRelation == option,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                update { it.copy(foodRelation = option) }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

@@ -28,6 +28,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.meditrack.R
 import com.meditrack.data.local.entity.DoseEventEntity
 import com.meditrack.domain.model.DoseStatus
+import com.meditrack.domain.model.FoodRelation
 import com.meditrack.domain.model.TreatmentType
 import com.meditrack.ui.components.BasicCard
 import com.meditrack.ui.components.RefillDialog
@@ -107,6 +108,9 @@ fun MedicationDetailScreen(
                         )
                         Text(stringResource(R.string.detail_treatment, stringResource(medication.treatmentType.labelRes())))
                         Text(stringResource(R.string.detail_schedule, state.scheduleSummary))
+                        if (medication.foodRelation != FoodRelation.NONE) {
+                            Text(stringResource(R.string.detail_food, stringResource(medication.foodRelation.labelRes())))
+                        }
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             if (state.summary?.outOfStock == true) StatusBadge(stringResource(R.string.badge_out_of_stock), Color(0xFFB42318))
                             if (state.summary?.lowStock == true) StatusBadge(stringResource(R.string.badge_low_stock), Color(0xFFB54708))

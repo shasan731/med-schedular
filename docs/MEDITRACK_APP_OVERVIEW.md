@@ -115,6 +115,7 @@ Medication stores:
 - `endDate`
 - `currentStock`
 - `totalRequiredStock`
+- `foodRelation`
 - `lowStockThresholdDays`
 - `isActive`
 - `createdAt`
@@ -124,6 +125,15 @@ Supported treatment types:
 
 - `CONTINUOUS`
 - `FIXED_COURSE`
+
+Supported food-timing values (`foodRelation`), captured for doctor advice such as "take after food":
+
+- `NONE`
+- `BEFORE_FOOD`
+- `AFTER_FOOD`
+- `WITH_FOOD`
+
+Food timing is shown on the Today card, the medication detail screen, and the dose reminder notification.
 
 Continuous medication does not require an end date. Fixed Course medication requires an end date and calculates the total required stock from actual scheduled dose dates.
 
@@ -315,9 +325,10 @@ How reminders work:
 2. `ReminderScheduler` cancels the alarms it armed last time and schedules a fresh exact alarm for each pending dose event using `AlarmManager` (`setExactAndAllowWhileIdle`). The set of armed dose-event ids is persisted so it can be cancelled cleanly on the next reschedule.
 3. When a dose is due, the alarm fires `ReminderReceiver`.
 4. The receiver checks settings and current dose status.
-5. If notifications are enabled and the dose is still pending, a local notification is shown.
-6. Notification actions allow the user to mark the dose Taken or Skip directly.
-7. Notification action receiver updates Room data through the repository and then reschedules reminders.
+5. If notifications are enabled and the dose is still pending, a local notification is shown on an explicit-sound channel; the notification includes the food-timing advice when set.
+6. If the user has enabled alarm-style alerts, the notification is posted on a separate louder alarm channel (alarm-stream ringtone, `CATEGORY_ALARM`) instead of the standard reminder channel.
+7. Notification actions allow the user to mark the dose Taken or Skip directly.
+8. Notification action receiver updates Room data through the repository and then reschedules reminders.
 
 Exact alarms fire on time even in Doze / battery-saver. If the user has revoked the exact-alarm permission (possible on Android 12), the scheduler falls back to `setAndAllowWhileIdle`, which still fires but not exactly on time.
 
@@ -460,6 +471,7 @@ UX details:
 - Dates are chosen from a single large button that shows a human-readable date, for example "Tue, Jul 7, 2026", backed by a Material date picker.
 - For Fixed Course medication, users enter a course length such as 7 Days, 2 Weeks, or 1 Month, and the last day is calculated and shown in plain language.
 - Estimated full-course stock requirement is shown for simple prescription patterns.
+- A food-timing selector (Any time / Before food / After food / With food) captures the doctor's advice.
 - Advanced schedule is available behind a switch for hourly, daily interval, weekly, or monthly plans, and is off by default.
 - Validation errors are shown in plain language.
 
@@ -522,6 +534,7 @@ Purpose:
 - Configure default low-stock threshold.
 - Toggle notifications.
 - Toggle vibration.
+- Toggle alarm-style alert sound (uses a louder alarm ringtone on a separate channel).
 - Export local data as JSON.
 - Clear all data with confirmation.
 
@@ -617,7 +630,7 @@ Covered logic:
 - Dose reminders use exact alarms and fire on time, but aggressive OEM battery managers can still delay or kill background apps; disabling battery optimization is recommended.
 - There are no instrumented UI tests yet.
 - There is no database migration strategy beyond destructive migration in the MVP.
-- The current schema has been bumped to version 2 to support per-schedule dose amounts.
+- The current schema is at version 3 (per-schedule dose amounts in v2, medication food timing in v3), still using destructive migration.
 - There is no encrypted database layer.
 - Dose history exists, but advanced analytics and charts are not implemented.
 - A basic refill (add to current stock) exists on the Medicines and Detail screens; there is no separate refill transaction history yet.
