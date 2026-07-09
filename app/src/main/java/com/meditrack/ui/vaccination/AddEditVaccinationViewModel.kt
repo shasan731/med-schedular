@@ -60,12 +60,19 @@ class AddEditVaccinationViewModel(
             }
 
             val scheduledDateTime = LocalDateTime.of(date, LocalTime.parse(normalizedTime))
+            // Anything not already marked done is (re)armed as upcoming when saved; the reschedule
+            // that follows re-flags it as missed if the chosen date/time is already in the past.
+            val status = if (form.status == VaccinationStatus.DONE) {
+                VaccinationStatus.DONE
+            } else {
+                VaccinationStatus.UPCOMING
+            }
             val entity = VaccinationEntity(
                 id = currentId ?: 0L,
                 name = name,
                 doseLabel = form.doseLabel.trim(),
                 scheduledDateTime = scheduledDateTime,
-                status = form.status,
+                status = status,
                 note = form.note.trim().ifBlank { null }
             )
             currentId = repository.saveVaccination(entity)

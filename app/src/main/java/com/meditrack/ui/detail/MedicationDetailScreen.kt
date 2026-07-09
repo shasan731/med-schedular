@@ -76,7 +76,8 @@ fun MedicationDetailScreen(
                 title = medication?.name ?: stringResource(R.string.detail_default_title),
                 subtitle = medication?.dosageInstruction,
                 actionLabel = if (medication != null) stringResource(R.string.action_edit) else null,
-                onAction = medication?.let { { onEdit(it.id) } }
+                onAction = medication?.let { { onEdit(it.id) } },
+                onBack = onBack
             )
         }
         if (medication == null) {
@@ -138,15 +139,12 @@ fun MedicationDetailScreen(
             }
 
             item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(stringResource(R.string.dose_history), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                    OutlinedButton(onClick = onBack) { Text(stringResource(R.string.action_back)) }
-                }
+                Text(
+                    stringResource(R.string.dose_history),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
             }
 
             if (state.history.isEmpty()) {

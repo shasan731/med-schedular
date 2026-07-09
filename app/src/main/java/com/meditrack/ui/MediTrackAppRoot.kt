@@ -73,7 +73,10 @@ fun MediTrackAppRoot() {
         currentRoute == Routes.Inventory ||
         currentRoute == Routes.Vaccinations ||
         currentRoute == Routes.Settings
-    val showAddButton = currentRoute == Routes.Dashboard || currentRoute == Routes.Inventory
+    val showAddButton = currentRoute == Routes.Dashboard ||
+        currentRoute == Routes.Inventory ||
+        currentRoute == Routes.Vaccinations
+    val addingVaccine = currentRoute == Routes.Vaccinations
 
     Scaffold(
         bottomBar = {
@@ -118,11 +121,18 @@ fun MediTrackAppRoot() {
         floatingActionButton = {
             if (showAddButton) {
                 ExtendedFloatingActionButton(
-                    onClick = { navController.navigate(Routes.AddEdit) },
+                    onClick = {
+                        navController.navigate(
+                            if (addingVaccine) Routes.AddEditVaccination else Routes.AddEdit
+                        )
+                    },
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary
                 ) {
-                    Text(stringResource(R.string.action_add_medicine), fontWeight = FontWeight.Bold)
+                    Text(
+                        stringResource(if (addingVaccine) R.string.vacc_add else R.string.action_add_medicine),
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }

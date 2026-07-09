@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.meditrack.AppGraph
 import com.meditrack.data.local.entity.VaccinationEntity
+import com.meditrack.domain.model.VaccinationStatus
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -14,7 +15,13 @@ class VaccinationViewModel : ViewModel() {
     private val scheduler = AppGraph.reminderScheduler
 
     val uiState = repository.observeVaccinations()
-        .map { VaccinationUiState(items = it) }
+        .map { list ->
+            // Upcoming shots first (soonest at the top), then past shots (most recent first).
+            val (upcoming, past) = list.partition { it.status == VaccinationStatus.UPCOMING }
+            val ordered = upcoming.sortedBy { it.scheduledDateTime } +
+                past.sortedByDescending { it.scheduledDateTime }
+            VaccinationUiState(items = ordered)
+        }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),

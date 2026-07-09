@@ -49,15 +49,13 @@ fun VaccinationScreen(
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 24.dp),
+        contentPadding = PaddingValues(bottom = 96.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         item {
             ScreenHeader(
                 title = stringResource(R.string.vacc_title),
-                subtitle = stringResource(R.string.vacc_subtitle),
-                actionLabel = stringResource(R.string.vacc_add),
-                onAction = onAddVaccination
+                subtitle = stringResource(R.string.vacc_subtitle)
             )
         }
 
