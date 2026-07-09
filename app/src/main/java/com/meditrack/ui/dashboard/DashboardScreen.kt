@@ -24,7 +24,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -40,9 +39,12 @@ import com.meditrack.domain.model.FoodRelation
 import com.meditrack.ui.components.BasicCard
 import com.meditrack.ui.components.ScreenHeader
 import com.meditrack.ui.components.StatusBadge
+import com.meditrack.ui.dangerColor
 import com.meditrack.ui.displayTime
+import com.meditrack.ui.doseStatusColor
 import com.meditrack.ui.labelRes
 import com.meditrack.ui.stockText
+import com.meditrack.ui.warningColor
 import java.time.LocalTime
 
 @Composable
@@ -243,7 +245,7 @@ private fun DoseRow(
             if (dose.status != DoseStatus.PENDING) {
                 StatusBadge(
                     text = stringResource(dose.status.labelRes()),
-                    color = statusColor(dose.status)
+                    color = doseStatusColor(dose.status)
                 )
             }
         }
@@ -257,8 +259,8 @@ private fun DoseRow(
                 style = MaterialTheme.typography.titleMedium
             )
             when (stockStatus) {
-                StockStatus.OUT -> StatusBadge(text = stringResource(R.string.badge_out_of_stock), color = Color(0xFFB42318))
-                StockStatus.LOW -> StatusBadge(text = stringResource(R.string.badge_low_stock), color = Color(0xFFB54708))
+                StockStatus.OUT -> StatusBadge(text = stringResource(R.string.badge_out_of_stock), color = dangerColor())
+                StockStatus.LOW -> StatusBadge(text = stringResource(R.string.badge_low_stock), color = warningColor())
                 StockStatus.OK -> Unit
             }
         }
@@ -344,11 +346,3 @@ private fun DoseEventWithMedication.groupTitleRes(): Int {
     }
 }
 
-private fun statusColor(status: DoseStatus): Color {
-    return when (status) {
-        DoseStatus.PENDING -> Color(0xFF355C7D)
-        DoseStatus.TAKEN -> Color(0xFF1E7E6F)
-        DoseStatus.SKIPPED -> Color(0xFF7A4F01)
-        DoseStatus.MISSED -> Color(0xFFB42318)
-    }
-}

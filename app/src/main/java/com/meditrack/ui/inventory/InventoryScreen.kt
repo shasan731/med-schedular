@@ -27,7 +27,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -40,9 +39,13 @@ import com.meditrack.ui.components.ConfirmingTextButton
 import com.meditrack.ui.components.RefillDialog
 import com.meditrack.ui.components.ScreenHeader
 import com.meditrack.ui.components.StatusBadge
+import com.meditrack.ui.dangerColor
 import com.meditrack.ui.daysRemainingText
+import com.meditrack.ui.infoColor
 import com.meditrack.ui.labelRes
 import com.meditrack.ui.stockText
+import com.meditrack.ui.successColor
+import com.meditrack.ui.warningColor
 
 @Composable
 fun InventoryScreen(
@@ -169,14 +172,14 @@ private fun InventoryCard(
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                StatusBadge(stringResource(medication.treatmentType.labelRes()), Color(0xFF355C7D))
+                StatusBadge(stringResource(medication.treatmentType.labelRes()), infoColor())
                 if (item.summary.outOfStock) {
-                    StatusBadge(stringResource(R.string.badge_out_of_stock), Color(0xFFB42318))
+                    StatusBadge(stringResource(R.string.badge_out_of_stock), dangerColor())
                 } else if (item.summary.lowStock) {
-                    StatusBadge(stringResource(R.string.badge_low_stock), Color(0xFFB54708))
+                    StatusBadge(stringResource(R.string.badge_low_stock), warningColor())
                 }
                 if (item.summary.courseComplete) {
-                    StatusBadge(stringResource(R.string.badge_course_complete), Color(0xFF1E7E6F))
+                    StatusBadge(stringResource(R.string.badge_course_complete), successColor())
                 }
             }
 
@@ -193,7 +196,7 @@ private fun InventoryCard(
                 if (item.summary.insufficientStockForCourse) {
                     Text(
                         stringResource(R.string.purchase_warning),
-                        color = Color(0xFFB42318),
+                        color = dangerColor(),
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.SemiBold
                     )

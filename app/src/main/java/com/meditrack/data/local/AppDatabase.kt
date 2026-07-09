@@ -19,7 +19,7 @@ import com.meditrack.data.local.entity.VaccinationEntity
         DoseEventEntity::class,
         VaccinationEntity::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 @TypeConverters(RoomConverters::class)

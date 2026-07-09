@@ -22,7 +22,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -37,6 +36,7 @@ import com.meditrack.ui.components.StatusBadge
 import com.meditrack.ui.displayTime
 import com.meditrack.ui.labelRes
 import com.meditrack.ui.longDisplayDate
+import com.meditrack.ui.vaccinationStatusColor
 
 @Composable
 fun VaccinationScreen(
@@ -132,7 +132,7 @@ private fun VaccinationCard(
                 }
                 StatusBadge(
                     text = stringResource(vaccination.status.labelRes()),
-                    color = statusColor(vaccination.status)
+                    color = vaccinationStatusColor(vaccination.status)
                 )
             }
 
@@ -165,10 +165,3 @@ private fun VaccinationCard(
     }
 }
 
-private fun statusColor(status: VaccinationStatus): Color {
-    return when (status) {
-        VaccinationStatus.UPCOMING -> Color(0xFF355C7D)
-        VaccinationStatus.DONE -> Color(0xFF1E7E6F)
-        VaccinationStatus.MISSED -> Color(0xFFB42318)
-    }
-}

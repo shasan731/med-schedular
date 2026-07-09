@@ -264,7 +264,7 @@ Rules:
 - Marking a pending/skipped/missed dose as Taken deducts `doseAmount` from medication stock.
 - Stock is never allowed to go below 0.
 - Marking an already Taken dose as Taken again does not deduct stock again.
-- Changing a previously Taken dose to Skipped restores the dose amount back to stock.
+- Changing a previously Taken dose to Skipped restores the amount that was actually deducted (persisted on the dose event), so reverting a dose taken while stock was low does not inflate stock.
 - Marking a dose as Skipped does not deduct stock.
 - Pending doses older than the grace period can be marked as Missed.
 
@@ -377,6 +377,7 @@ Theme behavior:
 - `Light` forces the light palette.
 - `Dark` forces the dark palette.
 - Warning and alert surfaces use Material color roles so they remain readable in both light and dark themes.
+- Status badge colours are centralized in `ui/StatusColors.kt` (danger / warning / success / info) and are theme-aware: they brighten in dark mode (detected from the applied scheme's surface luminance) so badge text stays legible.
 
 ### Today Screen
 
@@ -653,7 +654,7 @@ Covered logic:
 - Dose reminders use exact alarms and fire on time, but aggressive OEM battery managers can still delay or kill background apps; disabling battery optimization is recommended.
 - There are no instrumented UI tests yet.
 - There is no database migration strategy beyond destructive migration in the MVP.
-- The current schema is at version 4 (per-schedule dose amounts in v2, medication food timing in v3, vaccinations table in v4), still using destructive migration.
+- The current schema is at version 5 (per-schedule dose amounts in v2, medication food timing in v3, vaccinations table in v4, per-dose deducted-amount in v5), still using destructive migration.
 - There is no encrypted database layer.
 - Dose history exists, but advanced analytics and charts are not implemented.
 - A basic refill (add to current stock) exists on the Medicines and Detail screens; there is no separate refill transaction history yet.

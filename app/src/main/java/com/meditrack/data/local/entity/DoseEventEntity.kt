@@ -30,5 +30,8 @@ data class DoseEventEntity(
     val takenDateTime: LocalDateTime? = null,
     val skippedDateTime: LocalDateTime? = null,
     val doseAmount: Double,
+    // How much stock was actually deducted when this dose was marked taken (may be less than
+    // doseAmount if stock ran low). Used to restore the exact amount if it is later un-taken.
+    val deductedAmount: Double? = null,
     val note: String? = null
 )

@@ -18,13 +18,17 @@ object DoseStatusManager {
         } else {
             medication.currentStock
         }
+        // Record what was actually removed (clamped at 0) so a later revert restores exactly that
+        // amount rather than the full dose, which would otherwise inflate stock.
+        val deducted = if (shouldDeduct) medication.currentStock - newStock else doseEvent.deductedAmount
         return medication.copy(
             currentStock = newStock,
             updatedAt = takenAt
         ) to doseEvent.copy(
             status = DoseStatus.TAKEN,
             takenDateTime = takenAt,
-            skippedDateTime = null
+            skippedDateTime = null,
+            deductedAmount = deducted
         )
     }
 
@@ -45,14 +49,14 @@ object DoseStatusManager {
         skippedAt: LocalDateTime = LocalDateTime.now()
     ): Pair<MedicationEntity, DoseEventEntity> {
         val restoredStock = if (doseEvent.status == DoseStatus.TAKEN) {
-            medication.currentStock + doseEvent.doseAmount
+            medication.currentStock + (doseEvent.deductedAmount ?: doseEvent.doseAmount)
         } else {
             medication.currentStock
         }
         return medication.copy(
             currentStock = restoredStock,
             updatedAt = skippedAt
-        ) to markDoseSkipped(doseEvent, skippedAt)
+        ) to markDoseSkipped(doseEvent, skippedAt).copy(deductedAmount = null)
     }
 
     fun markMissedIfPastGracePeriod(

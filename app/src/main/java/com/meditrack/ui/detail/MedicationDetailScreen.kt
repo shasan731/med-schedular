@@ -19,7 +19,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -34,10 +33,14 @@ import com.meditrack.ui.components.BasicCard
 import com.meditrack.ui.components.RefillDialog
 import com.meditrack.ui.components.ScreenHeader
 import com.meditrack.ui.components.StatusBadge
+import com.meditrack.ui.dangerColor
 import com.meditrack.ui.daysRemainingText
 import com.meditrack.ui.displayTime
+import com.meditrack.ui.doseStatusColor
 import com.meditrack.ui.labelRes
 import com.meditrack.ui.stockText
+import com.meditrack.ui.successColor
+import com.meditrack.ui.warningColor
 import java.time.format.DateTimeFormatter
 
 @Composable
@@ -113,9 +116,9 @@ fun MedicationDetailScreen(
                             Text(stringResource(R.string.detail_food, stringResource(medication.foodRelation.labelRes())))
                         }
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            if (state.summary?.outOfStock == true) StatusBadge(stringResource(R.string.badge_out_of_stock), Color(0xFFB42318))
-                            if (state.summary?.lowStock == true) StatusBadge(stringResource(R.string.badge_low_stock), Color(0xFFB54708))
-                            if (state.summary?.courseComplete == true) StatusBadge(stringResource(R.string.badge_course_complete), Color(0xFF1E7E6F))
+                            if (state.summary?.outOfStock == true) StatusBadge(stringResource(R.string.badge_out_of_stock), dangerColor())
+                            if (state.summary?.lowStock == true) StatusBadge(stringResource(R.string.badge_low_stock), warningColor())
+                            if (state.summary?.courseComplete == true) StatusBadge(stringResource(R.string.badge_course_complete), successColor())
                         }
                         if (medication.treatmentType == TreatmentType.FIXED_COURSE) {
                             Text(stringResource(R.string.detail_required_stock, medication.totalRequiredStock?.stockText() ?: "0", medication.doseUnit))
@@ -123,7 +126,7 @@ fun MedicationDetailScreen(
                             if (state.summary?.insufficientStockForCourse == true) {
                                 Text(
                                     stringResource(R.string.detail_purchase_warning),
-                                    color = Color(0xFFB42318),
+                                    color = dangerColor(),
                                     fontWeight = FontWeight.SemiBold
                                 )
                             }
@@ -177,16 +180,7 @@ private fun HistoryRow(event: DoseEventEntity) {
                 Text(event.scheduledDateTime.format(DateTimeFormatter.ofPattern("MMM d, yyyy")))
                 Text(event.scheduledDateTime.displayTime(), style = MaterialTheme.typography.bodySmall)
             }
-            StatusBadge(stringResource(event.status.labelRes()), statusColor(event.status))
+            StatusBadge(stringResource(event.status.labelRes()), doseStatusColor(event.status))
         }
-    }
-}
-
-private fun statusColor(status: DoseStatus): Color {
-    return when (status) {
-        DoseStatus.PENDING -> Color(0xFF355C7D)
-        DoseStatus.TAKEN -> Color(0xFF1E7E6F)
-        DoseStatus.SKIPPED -> Color(0xFF7A4F01)
-        DoseStatus.MISSED -> Color(0xFFB42318)
     }
 }

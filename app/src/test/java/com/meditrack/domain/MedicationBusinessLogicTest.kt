@@ -48,6 +48,20 @@ class MedicationBusinessLogicTest {
     }
 
     @Test
+    fun revertingClampedTakenDoseDoesNotInflateStock() {
+        // Taking a dose with insufficient stock clamps the deduction at 0; reverting it to skipped
+        // must only restore what was actually removed, not the full dose amount.
+        val medication = medication(currentStock = 0.5)
+        val dose = doseEvent(doseAmount = 1.0)
+
+        val (afterTaken, takenDose) = DoseStatusManager.markDoseTaken(medication, dose)
+        assertEquals(0.0, afterTaken.currentStock, 0.0)
+
+        val (afterSkipped, _) = DoseStatusManager.markDoseSkipped(afterTaken, takenDose)
+        assertEquals(0.5, afterSkipped.currentStock, 0.0)
+    }
+
+    @Test
     fun stockNeverGoesBelowZero() {
         val medication = medication(currentStock = 0.5)
         val dose = doseEvent(doseAmount = 1.0)
