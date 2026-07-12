@@ -16,6 +16,9 @@ interface VaccinationDao {
     @Query("SELECT * FROM vaccinations ORDER BY scheduledDateTime ASC")
     fun observeVaccinations(): Flow<List<VaccinationEntity>>
 
+    @Query("SELECT * FROM vaccinations ORDER BY scheduledDateTime ASC")
+    suspend fun getAllVaccinations(): List<VaccinationEntity>
+
     @Query("SELECT * FROM vaccinations WHERE id = :id")
     suspend fun getVaccination(id: Long): VaccinationEntity?
 

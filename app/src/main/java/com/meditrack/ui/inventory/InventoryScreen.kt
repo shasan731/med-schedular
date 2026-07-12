@@ -112,6 +112,7 @@ fun InventoryScreen(
                         viewModel.disableMedication(item.medication.id)
                         pendingDisableId = null
                     },
+                    onReactivate = { viewModel.reactivateMedication(item.medication.id) },
                     onDeleteFirstClick = { pendingDeleteId = item.medication.id },
                     onDeleteConfirm = {
                         viewModel.deleteMedication(item.medication.id)
@@ -133,6 +134,7 @@ private fun InventoryCard(
     onEdit: () -> Unit,
     onDisableFirstClick: () -> Unit,
     onDisableConfirm: () -> Unit,
+    onReactivate: () -> Unit,
     onDeleteFirstClick: () -> Unit,
     onDeleteConfirm: () -> Unit
 ) {
@@ -172,14 +174,18 @@ private fun InventoryCard(
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                StatusBadge(stringResource(medication.treatmentType.labelRes()), infoColor())
-                if (item.summary.outOfStock) {
-                    StatusBadge(stringResource(R.string.badge_out_of_stock), dangerColor())
-                } else if (item.summary.lowStock) {
-                    StatusBadge(stringResource(R.string.badge_low_stock), warningColor())
-                }
-                if (item.summary.courseComplete) {
-                    StatusBadge(stringResource(R.string.badge_course_complete), successColor())
+                if (!medication.isActive) {
+                    StatusBadge(stringResource(R.string.badge_disabled), infoColor())
+                } else {
+                    StatusBadge(stringResource(medication.treatmentType.labelRes()), infoColor())
+                    if (item.summary.outOfStock) {
+                        StatusBadge(stringResource(R.string.badge_out_of_stock), dangerColor())
+                    } else if (item.summary.lowStock) {
+                        StatusBadge(stringResource(R.string.badge_low_stock), warningColor())
+                    }
+                    if (item.summary.courseComplete) {
+                        StatusBadge(stringResource(R.string.badge_course_complete), successColor())
+                    }
                 }
             }
 
@@ -193,7 +199,7 @@ private fun InventoryCard(
                     ),
                     style = MaterialTheme.typography.bodySmall
                 )
-                if (item.summary.insufficientStockForCourse) {
+                if (medication.isActive && item.summary.insufficientStockForCourse) {
                     Text(
                         stringResource(R.string.purchase_warning),
                         color = dangerColor(),
@@ -203,35 +209,43 @@ private fun InventoryCard(
                 }
             }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Button(
-                    onClick = onRefill,
-                    modifier = Modifier.weight(1f)
+            if (medication.isActive) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(stringResource(R.string.action_refill))
-                }
-                OutlinedButton(
-                    onClick = onEdit,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text(stringResource(R.string.action_edit))
+                    Button(
+                        onClick = onRefill,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(stringResource(R.string.action_refill))
+                    }
+                    OutlinedButton(
+                        onClick = onEdit,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(stringResource(R.string.action_edit))
+                    }
                 }
             }
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                ConfirmingTextButton(
-                    label = stringResource(R.string.action_disable),
-                    confirmingLabel = stringResource(R.string.action_disable_confirm),
-                    awaitingConfirmation = awaitingDisable,
-                    onFirstClick = onDisableFirstClick,
-                    onConfirm = onDisableConfirm,
-                    modifier = Modifier.weight(1f)
-                )
+                if (medication.isActive) {
+                    ConfirmingTextButton(
+                        label = stringResource(R.string.action_disable),
+                        confirmingLabel = stringResource(R.string.action_disable_confirm),
+                        awaitingConfirmation = awaitingDisable,
+                        onFirstClick = onDisableFirstClick,
+                        onConfirm = onDisableConfirm,
+                        modifier = Modifier.weight(1f)
+                    )
+                } else {
+                    Button(onClick = onReactivate, modifier = Modifier.weight(1f)) {
+                        Text(stringResource(R.string.action_reactivate))
+                    }
+                }
                 ConfirmingTextButton(
                     label = stringResource(R.string.action_delete),
                     confirmingLabel = stringResource(R.string.action_delete_confirm),

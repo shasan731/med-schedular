@@ -1,6 +1,7 @@
 package com.meditrack.notifications
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -24,6 +25,8 @@ import com.meditrack.ui.labelRes
 object NotificationHelper {
     const val CHANNEL_DOSE_REMINDERS = "dose_reminders"
     const val CHANNEL_DOSE_ALARMS = "dose_alarms"
+    private const val CHANNEL_DOSE_REMINDERS_NO_VIBRATION = "dose_reminders_no_vibration"
+    private const val CHANNEL_DOSE_ALARMS_NO_VIBRATION = "dose_alarms_no_vibration"
     // Keeps vaccination notification ids from colliding with dose notification ids.
     private const val VACCINATION_NOTIF_OFFSET = 1_000_000L
     const val ACTION_MARK_TAKEN = "com.meditrack.action.MARK_TAKEN"
@@ -31,50 +34,15 @@ object NotificationHelper {
     const val EXTRA_DOSE_EVENT_ID = "dose_event_id"
 
     fun createChannels(context: Context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val manager = context.getSystemService(NotificationManager::class.java)
-
-            // Standard reminder channel: default notification sound.
-            val reminderChannel = NotificationChannel(
-                CHANNEL_DOSE_REMINDERS,
-                context.getString(R.string.notif_channel_name),
-                NotificationManager.IMPORTANCE_HIGH
-            ).apply {
-                description = context.getString(R.string.notif_channel_desc)
-                enableVibration(true)
-                // Explicitly play a sound (heads-up importance already implies one, but this makes
-                // the reminder audible even if the default behaviour changes).
-                setSound(
-                    RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION),
-                    AudioAttributes.Builder()
-                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                        .setUsage(AudioAttributes.USAGE_NOTIFICATION)
-                        .build()
-                )
-            }
-
-            // Alarm channel: louder, alarm-stream ringtone for users who want an alarm-style alert.
-            val alarmChannel = NotificationChannel(
-                CHANNEL_DOSE_ALARMS,
-                context.getString(R.string.notif_channel_alarm_name),
-                NotificationManager.IMPORTANCE_HIGH
-            ).apply {
-                description = context.getString(R.string.notif_channel_alarm_desc)
-                enableVibration(true)
-                val alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-                    ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-                setSound(
-                    alarmSound,
-                    AudioAttributes.Builder()
-                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                        .setUsage(AudioAttributes.USAGE_ALARM)
-                        .build()
-                )
-            }
-
-            manager.createNotificationChannel(reminderChannel)
-            manager.createNotificationChannel(alarmChannel)
-        }
+        val manager = context.getSystemService(NotificationManager::class.java)
+        manager.createNotificationChannels(
+            listOf(
+                buildChannel(context, CHANNEL_DOSE_REMINDERS, false, true),
+                buildChannel(context, CHANNEL_DOSE_ALARMS, true, true),
+                buildChannel(context, CHANNEL_DOSE_REMINDERS_NO_VIBRATION, false, false),
+                buildChannel(context, CHANNEL_DOSE_ALARMS_NO_VIBRATION, true, false)
+            )
+        )
     }
 
     fun showDoseReminder(
@@ -112,7 +80,7 @@ object NotificationHelper {
             payload.medication.dosageInstruction
         }
 
-        val channelId = if (useAlarmSound) CHANNEL_DOSE_ALARMS else CHANNEL_DOSE_REMINDERS
+        val channelId = channelId(useAlarmSound, vibrationEnabled)
         val builder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle(context.getString(R.string.notif_title, payload.medication.name))
@@ -127,12 +95,7 @@ object NotificationHelper {
         if (useAlarmSound) {
             builder.setCategory(NotificationCompat.CATEGORY_ALARM)
         }
-        if (!vibrationEnabled) {
-            builder.setVibrate(null)
-        }
-
-        NotificationManagerCompat.from(context)
-            .notify(payload.doseEvent.id.toInt(), builder.build())
+        postNotification(context, payload.doseEvent.id.toInt(), builder.build())
     }
 
     fun showVaccinationReminder(
@@ -151,7 +114,7 @@ object NotificationHelper {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val channelId = if (useAlarmSound) CHANNEL_DOSE_ALARMS else CHANNEL_DOSE_REMINDERS
+        val channelId = channelId(useAlarmSound, vibrationEnabled)
         val builder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle(context.getString(R.string.notif_vaccination_title, vaccination.name))
@@ -166,11 +129,7 @@ object NotificationHelper {
         if (useAlarmSound) {
             builder.setCategory(NotificationCompat.CATEGORY_ALARM)
         }
-        if (!vibrationEnabled) {
-            builder.setVibrate(null)
-        }
-
-        NotificationManagerCompat.from(context).notify(notificationId, builder.build())
+        postNotification(context, notificationId, builder.build())
     }
 
     fun cancelDoseNotification(context: Context, doseEventId: Long) {
@@ -183,6 +142,66 @@ object NotificationHelper {
                 context,
                 Manifest.permission.POST_NOTIFICATIONS
             ) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun buildChannel(
+        context: Context,
+        id: String,
+        useAlarmSound: Boolean,
+        vibrationEnabled: Boolean
+    ): NotificationChannel {
+        val nameRes = when {
+            useAlarmSound && vibrationEnabled -> R.string.notif_channel_alarm_name
+            useAlarmSound -> R.string.notif_channel_alarm_no_vibration_name
+            vibrationEnabled -> R.string.notif_channel_name
+            else -> R.string.notif_channel_no_vibration_name
+        }
+        val descriptionRes = if (useAlarmSound) {
+            R.string.notif_channel_alarm_desc
+        } else {
+            R.string.notif_channel_desc
+        }
+        val sound = if (useAlarmSound) {
+            RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+        } else {
+            RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+        }
+        val usage = if (useAlarmSound) AudioAttributes.USAGE_ALARM else AudioAttributes.USAGE_NOTIFICATION
+        return NotificationChannel(
+            id,
+            context.getString(nameRes),
+            NotificationManager.IMPORTANCE_HIGH
+        ).apply {
+            description = context.getString(descriptionRes)
+            enableVibration(vibrationEnabled)
+            setSound(
+                sound,
+                AudioAttributes.Builder()
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .setUsage(usage)
+                    .build()
+            )
+        }
+    }
+
+    private fun channelId(useAlarmSound: Boolean, vibrationEnabled: Boolean): String {
+        return when {
+            useAlarmSound && vibrationEnabled -> CHANNEL_DOSE_ALARMS
+            useAlarmSound -> CHANNEL_DOSE_ALARMS_NO_VIBRATION
+            vibrationEnabled -> CHANNEL_DOSE_REMINDERS
+            else -> CHANNEL_DOSE_REMINDERS_NO_VIBRATION
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun postNotification(context: Context, id: Int, notification: android.app.Notification) {
+        if (!canPostNotifications(context)) return
+        try {
+            NotificationManagerCompat.from(context).notify(id, notification)
+        } catch (_: SecurityException) {
+            // Permission can be revoked between the explicit check and the system call.
+        }
     }
 
     private fun actionPendingIntent(

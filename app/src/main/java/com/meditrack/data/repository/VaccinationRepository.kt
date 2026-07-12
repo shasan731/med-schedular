@@ -24,6 +24,11 @@ class VaccinationRepository(
             dao.update(
                 vaccination.copy(
                     createdAt = existing?.createdAt ?: vaccination.createdAt,
+                    completedDateTime = if (vaccination.status == VaccinationStatus.DONE) {
+                        vaccination.completedDateTime ?: existing?.completedDateTime
+                    } else {
+                        null
+                    },
                     updatedAt = now
                 )
             )
@@ -40,19 +45,36 @@ class VaccinationRepository(
         dao.updateStatus(id, VaccinationStatus.UPCOMING, null, LocalDateTime.now())
     }
 
-    suspend fun markOverdueMissed(now: LocalDateTime = LocalDateTime.now()) {
-        dao.markOverdueMissed(now, VaccinationStatus.UPCOMING, VaccinationStatus.MISSED)
+    suspend fun markOverdueMissed(
+        now: LocalDateTime = LocalDateTime.now(),
+        graceMinutes: Long = REMINDER_GRACE_MINUTES
+    ) {
+        dao.markOverdueMissed(
+            now.minusMinutes(graceMinutes.coerceAtLeast(0)),
+            VaccinationStatus.UPCOMING,
+            VaccinationStatus.MISSED
+        )
     }
 
     suspend fun deleteVaccination(id: Long) {
         dao.deleteById(id)
     }
 
-    suspend fun upcomingVaccinations(now: LocalDateTime = LocalDateTime.now()): List<VaccinationEntity> {
-        return dao.getUpcoming(now.minusMinutes(1), VaccinationStatus.UPCOMING)
+    suspend fun upcomingVaccinations(
+        now: LocalDateTime = LocalDateTime.now(),
+        graceMinutes: Long = REMINDER_GRACE_MINUTES
+    ): List<VaccinationEntity> {
+        return dao.getUpcoming(
+            now.minusMinutes(graceMinutes.coerceAtLeast(0)),
+            VaccinationStatus.UPCOMING
+        )
     }
 
     suspend fun clearAll() {
         dao.clearAll()
+    }
+
+    companion object {
+        const val REMINDER_GRACE_MINUTES = 60L
     }
 }

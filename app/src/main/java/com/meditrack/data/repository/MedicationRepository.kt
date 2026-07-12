@@ -129,6 +129,10 @@ class MedicationRepository(
         }
     }
 
+    suspend fun reactivateMedication(medicationId: Long) {
+        medicationDao.reactivateMedication(medicationId, LocalDateTime.now())
+    }
+
     suspend fun deleteMedication(medicationId: Long) {
         medicationDao.deleteMedicationById(medicationId)
     }
@@ -234,17 +238,41 @@ class MedicationRepository(
             .filter { it.status == DoseStatus.PENDING }
     }
 
-    suspend fun exportLocalDataAsJson(): String {
-        val medications = medicationDao.getActiveMedicationsWithSchedules()
-        val events = doseEventDao.getDoseEventsForRange(
-            LocalDate.of(1970, 1, 1).atStartOfDay(),
-            LocalDate.of(2100, 1, 1).atStartOfDay()
-        )
+    suspend fun exportLocalDataAsJson(settings: AppSettings? = null): String {
+        val medications = medicationDao.getAllMedicationsWithSchedules()
+        val events = doseEventDao.getAllDoseEvents()
+        val vaccinations = database.vaccinationDao().getAllVaccinations()
 
         return JSONObject()
+            .put("formatVersion", 1)
             .put("exportedAt", LocalDateTime.now().toString())
             .put("medications", JSONArray(medications.map { it.toJson() }))
             .put("doseEvents", JSONArray(events.map { it.toJson() }))
+            .put("vaccinations", JSONArray(vaccinations.map { vaccination ->
+                JSONObject()
+                    .put("id", vaccination.id)
+                    .put("name", vaccination.name)
+                    .put("doseLabel", vaccination.doseLabel)
+                    .put("scheduledDateTime", vaccination.scheduledDateTime.toString())
+                    .put("status", vaccination.status.name)
+                    .put("completedDateTime", vaccination.completedDateTime?.toString())
+                    .put("note", vaccination.note)
+                    .put("createdAt", vaccination.createdAt.toString())
+                    .put("updatedAt", vaccination.updatedAt.toString())
+            }))
+            .apply {
+                settings?.let {
+                    put(
+                        "settings",
+                        JSONObject()
+                            .put("defaultLowStockThresholdDays", it.defaultLowStockThresholdDays)
+                            .put("notificationsEnabled", it.notificationsEnabled)
+                            .put("vibrationEnabled", it.vibrationEnabled)
+                            .put("alarmSoundEnabled", it.alarmSoundEnabled)
+                            .put("themeMode", it.themeMode.name)
+                    )
+                }
+            }
             .toString(2)
     }
 
@@ -263,6 +291,8 @@ class MedicationRepository(
             .put("foodRelation", medication.foodRelation.name)
             .put("lowStockThresholdDays", medication.lowStockThresholdDays)
             .put("isActive", medication.isActive)
+            .put("createdAt", medication.createdAt.toString())
+            .put("updatedAt", medication.updatedAt.toString())
             .put("schedules", JSONArray(schedules.map { it.toJson() }))
     }
 
@@ -289,6 +319,7 @@ class MedicationRepository(
             .put("takenDateTime", takenDateTime?.toString())
             .put("skippedDateTime", skippedDateTime?.toString())
             .put("doseAmount", doseAmount)
+            .put("deductedAmount", deductedAmount)
             .put("note", note)
     }
 }

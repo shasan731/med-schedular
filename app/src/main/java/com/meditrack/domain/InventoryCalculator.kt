@@ -49,12 +49,16 @@ object InventoryCalculator {
 
     fun isInsufficientForFixedCourse(
         medication: MedicationEntity,
-        schedules: List<MedicationScheduleEntity>
+        schedules: List<MedicationScheduleEntity>,
+        takenDoseAmount: Double? = null
     ): Boolean {
         if (medication.treatmentType != TreatmentType.FIXED_COURSE) return false
         val required = medication.totalRequiredStock
             ?: calculateTotalRequiredStockForFixedCourse(medication, schedules)
-        return required > 0.0 && medication.currentStock < required
+        val remainingRequired = takenDoseAmount
+            ?.let { taken -> max(0.0, required - max(0.0, taken)) }
+            ?: required
+        return remainingRequired > 0.0 && medication.currentStock + STOCK_EPSILON < remainingRequired
     }
 
     fun estimateRemainingDoses(medication: MedicationEntity): Int {
@@ -66,6 +70,7 @@ object InventoryCalculator {
         medication: MedicationEntity,
         schedules: List<MedicationScheduleEntity>,
         takenDoseCount: Int? = null,
+        takenDoseAmount: Double? = null,
         today: LocalDate = LocalDate.now()
     ): MedicationSummary {
         val dailyUsage = calculateDailyUsage(medication, schedules)
@@ -81,7 +86,11 @@ object InventoryCalculator {
                 if (takenDoseCount == null) required else max(0, required - takenDoseCount)
             },
             courseComplete = courseComplete,
-            insufficientStockForCourse = isInsufficientForFixedCourse(medication, schedules)
+            insufficientStockForCourse = isInsufficientForFixedCourse(
+                medication,
+                schedules,
+                takenDoseAmount
+            )
         )
     }
 
@@ -129,6 +138,8 @@ object InventoryCalculator {
     }
 
     private fun roundStock(value: Double): Double = ceil(value * 100.0) / 100.0
+
+    private const val STOCK_EPSILON = 0.000_001
 
     fun parseDaysOfWeek(value: String?): Set<Int> {
         if (value.isNullOrBlank()) return emptySet()

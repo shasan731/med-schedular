@@ -157,6 +157,44 @@ class MedicationBusinessLogicTest {
     }
 
     @Test
+    fun fixedCourseDoesNotBecomeInsufficientAsCorrectlyStockedDosesAreTaken() {
+        val medication = medication(
+            currentStock = 9.0,
+            treatmentType = TreatmentType.FIXED_COURSE,
+            startDate = LocalDate.of(2026, 1, 1),
+            endDate = LocalDate.of(2026, 1, 5)
+        ).copy(totalRequiredStock = 10.0)
+        val schedules = specificTimes("08:00", "20:00")
+
+        assertFalse(
+            InventoryCalculator.isInsufficientForFixedCourse(
+                medication = medication,
+                schedules = schedules,
+                takenDoseAmount = 1.0
+            )
+        )
+    }
+
+    @Test
+    fun fixedCourseStillFlagsShortageAgainstRemainingRequirement() {
+        val medication = medication(
+            currentStock = 8.0,
+            treatmentType = TreatmentType.FIXED_COURSE,
+            startDate = LocalDate.of(2026, 1, 1),
+            endDate = LocalDate.of(2026, 1, 5)
+        ).copy(totalRequiredStock = 10.0)
+        val schedules = specificTimes("08:00", "20:00")
+
+        assertTrue(
+            InventoryCalculator.isInsufficientForFixedCourse(
+                medication = medication,
+                schedules = schedules,
+                takenDoseAmount = 1.0
+            )
+        )
+    }
+
+    @Test
     fun lowStockWarningAppearsWhenOneDayRemains() {
         assertTrue(InventoryCalculator.shouldShowLowStockWarning(daysRemaining = 1.0, thresholdDays = 1.0))
         assertFalse(InventoryCalculator.shouldShowLowStockWarning(daysRemaining = 1.1, thresholdDays = 1.0))

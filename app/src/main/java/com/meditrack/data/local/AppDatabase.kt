@@ -20,7 +20,7 @@ import com.meditrack.data.local.entity.VaccinationEntity
         VaccinationEntity::class
     ],
     version = 5,
-    exportSchema = false
+    exportSchema = true
 )
 @TypeConverters(RoomConverters::class)
 abstract class AppDatabase : RoomDatabase() {

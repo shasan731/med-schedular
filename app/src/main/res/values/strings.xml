@@ -30,6 +30,7 @@
     <string name="badge_out_of_stock">Out of stock</string>
     <string name="badge_low_stock">Low stock</string>
     <string name="badge_course_complete">Course complete</string>
+    <string name="badge_disabled">Disabled</string>
 
     <!-- Today -->
     <string name="today_title">Today</string>
@@ -55,6 +56,7 @@
     <string name="purchase_warning">Purchase warning: stock is below total course requirement.</string>
     <string name="action_disable">Disable</string>
     <string name="action_disable_confirm">Confirm disable</string>
+    <string name="action_reactivate">Reactivate</string>
     <string name="action_delete">Delete</string>
     <string name="action_delete_confirm">Confirm delete</string>
 
@@ -159,6 +161,7 @@
     <!-- Notifications -->
     <string name="notif_channel_name">Dose reminders</string>
     <string name="notif_channel_desc">Medication dose reminder notifications</string>
+    <string name="notif_channel_no_vibration_name">Dose reminders without vibration</string>
     <string name="notif_title">Medication due: %1$s</string>
     <string name="notif_action_taken">Mark Taken</string>
     <string name="notif_action_skip">Skip</string>
@@ -202,6 +205,7 @@
     <!-- Alarm-style sound -->
     <string name="notif_channel_alarm_name">Dose alarms</string>
     <string name="notif_channel_alarm_desc">Loud alarm-style dose reminders</string>
+    <string name="notif_channel_alarm_no_vibration_name">Dose alarms without vibration</string>
     <string name="settings_alarm_sound">Use alarm-style alert sound</string>
 
     <!-- Vaccinations -->

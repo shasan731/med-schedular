@@ -33,14 +33,21 @@ class MedicationDetailViewModel(
         if (medicationWithSchedules == null) {
             MedicationDetailUiState()
         } else {
-            val takenCount = history.count { it.status == DoseStatus.TAKEN }
+            val medication = medicationWithSchedules.medication
+            val takenEvents = history.filter { event ->
+                event.status == DoseStatus.TAKEN &&
+                    !event.scheduledDateTime.toLocalDate().isBefore(medication.startDate) &&
+                    (medication.endDate == null ||
+                        !event.scheduledDateTime.toLocalDate().isAfter(medication.endDate))
+            }
             MedicationDetailUiState(
-                medication = medicationWithSchedules.medication,
+                medication = medication,
                 scheduleSummary = scheduleSummaryText(AppGraph.appContext, medicationWithSchedules.schedules),
                 summary = InventoryCalculator.buildSummary(
-                    medication = medicationWithSchedules.medication,
+                    medication = medication,
                     schedules = medicationWithSchedules.schedules,
-                    takenDoseCount = takenCount
+                    takenDoseCount = takenEvents.size,
+                    takenDoseAmount = takenEvents.sumOf { it.doseAmount }
                 ),
                 history = history
             )

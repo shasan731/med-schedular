@@ -18,20 +18,23 @@ class InventoryViewModel : ViewModel() {
     private val scheduler = AppGraph.reminderScheduler
 
     val uiState = combine(
-        repository.observeActiveMedications(),
+        repository.observeAllMedications(),
         repository.observeAllDoseEvents()
     ) { medications, doseEvents ->
-        val takenCounts = doseEvents
-            .filter { it.status == DoseStatus.TAKEN }
-            .groupingBy { it.medicationId }
-            .eachCount()
-
         InventoryUiState(
             items = medications.map { item ->
+                val takenEvents = doseEvents.filter { event ->
+                    event.medicationId == item.medication.id &&
+                        event.status == DoseStatus.TAKEN &&
+                        !event.scheduledDateTime.toLocalDate().isBefore(item.medication.startDate) &&
+                        (item.medication.endDate == null ||
+                            !event.scheduledDateTime.toLocalDate().isAfter(item.medication.endDate))
+                }
                 val summary = InventoryCalculator.buildSummary(
                     medication = item.medication,
                     schedules = item.schedules,
-                    takenDoseCount = takenCounts[item.medication.id]
+                    takenDoseCount = takenEvents.size,
+                    takenDoseAmount = takenEvents.sumOf { it.doseAmount }
                 )
                 InventoryItemUi(
                     medication = item.medication,
@@ -55,6 +58,13 @@ class InventoryViewModel : ViewModel() {
     fun disableMedication(id: Long) {
         viewModelScope.launch {
             repository.disableMedication(id)
+            scheduler.rescheduleMedicationReminders()
+        }
+    }
+
+    fun reactivateMedication(id: Long) {
+        viewModelScope.launch {
+            repository.reactivateMedication(id)
             scheduler.rescheduleMedicationReminders()
         }
     }

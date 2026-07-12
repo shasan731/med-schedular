@@ -30,6 +30,7 @@
     <string name="badge_out_of_stock">স্টক শেষ</string>
     <string name="badge_low_stock">স্টক কম</string>
     <string name="badge_course_complete">কোর্স সম্পূর্ণ</string>
+    <string name="badge_disabled">নিষ্ক্রিয়</string>
 
     <!-- Today -->
     <string name="today_title">আজ</string>
@@ -55,6 +56,7 @@
     <string name="purchase_warning">কেনার সতর্কতা: স্টক সম্পূর্ণ কোর্সের প্রয়োজনের চেয়ে কম।</string>
     <string name="action_disable">নিষ্ক্রিয় করুন</string>
     <string name="action_disable_confirm">নিশ্চিত করুন</string>
+    <string name="action_reactivate">আবার চালু করুন</string>
     <string name="action_delete">মুছুন</string>
     <string name="action_delete_confirm">মোছা নিশ্চিত করুন</string>
 
@@ -159,6 +161,7 @@
     <!-- Notifications -->
     <string name="notif_channel_name">ডোজ অনুস্মারক</string>
     <string name="notif_channel_desc">ওষুধের ডোজ অনুস্মারক নোটিফিকেশন</string>
+    <string name="notif_channel_no_vibration_name">কম্পন ছাড়া ডোজ অনুস্মারক</string>
     <string name="notif_title">ওষুধের সময়: %1$s</string>
     <string name="notif_action_taken">খেয়েছি চিহ্নিত করুন</string>
     <string name="notif_action_skip">বাদ দিন</string>
@@ -202,6 +205,7 @@
     <!-- Alarm-style sound -->
     <string name="notif_channel_alarm_name">ডোজ অ্যালার্ম</string>
     <string name="notif_channel_alarm_desc">উচ্চ শব্দের অ্যালার্ম-ধরনের ডোজ অনুস্মারক</string>
+    <string name="notif_channel_alarm_no_vibration_name">কম্পন ছাড়া ডোজ অ্যালার্ম</string>
     <string name="settings_alarm_sound">অ্যালার্ম-ধরনের শব্দ ব্যবহার করুন</string>
 
     <!-- Vaccinations -->

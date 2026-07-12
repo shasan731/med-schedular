@@ -56,7 +56,7 @@ class SettingsViewModel : ViewModel() {
     fun exportJson() {
         exportJson.value = null
         viewModelScope.launch {
-            exportJson.value = medicationRepository.exportLocalDataAsJson()
+            exportJson.value = medicationRepository.exportLocalDataAsJson(settingsRepository.load())
             message.value = AppGraph.appContext.getString(R.string.msg_export_generated)
         }
     }

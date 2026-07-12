@@ -55,6 +55,9 @@ interface DoseEventDao {
     @Query("SELECT * FROM dose_events ORDER BY scheduledDateTime DESC")
     fun observeAllDoseEvents(): Flow<List<DoseEventEntity>>
 
+    @Query("SELECT * FROM dose_events ORDER BY scheduledDateTime DESC")
+    suspend fun getAllDoseEvents(): List<DoseEventEntity>
+
     @Query(
         """
         SELECT * FROM dose_events

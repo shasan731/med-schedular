@@ -294,8 +294,8 @@ Responsibilities:
 - Mark doses Taken or Skipped.
 - Mark overdue pending doses Missed.
 - Refill medication stock by adding units to current stock.
-- Disable or delete medication.
-- Export local medication data as JSON.
+- Disable, reactivate, or delete medication.
+- Export complete local app data as versioned JSON.
 
 Important behavior:
 
@@ -303,6 +303,7 @@ Important behavior:
 - Editing a medication preserves the original `createdAt` metadata.
 - Editing a medication deletes and recreates schedules, then deletes future pending dose events so new events can be regenerated from the updated schedule.
 - Disabling a medication marks it inactive and removes future pending dose events.
+- Disabled medications remain visible in Medicines with a Reactivate action.
 - Deleting a medication cascades schedule and dose event deletion through Room foreign keys.
 - Dose event generation is idempotent because duplicate events are ignored by the unique index.
 
@@ -329,6 +330,7 @@ How reminders work:
 6. If the user has enabled alarm-style alerts, the notification is posted on a separate louder alarm channel (alarm-stream ringtone, `CATEGORY_ALARM`) instead of the standard reminder channel.
 7. Notification actions allow the user to mark the dose Taken or Skip directly.
 8. Notification action receiver updates Room data through the repository and then reschedules reminders.
+9. Clock, timezone, reboot, package replacement, and exact-alarm permission changes trigger rescheduling.
 
 Exact alarms fire on time even in Doze / battery-saver. If the user has revoked the exact-alarm permission (possible on Android 12), the scheduler falls back to `setAndAllowWhileIdle`, which still fires but not exactly on time.
 
@@ -403,6 +405,7 @@ UX details:
 - Each medication row is kept minimal: a large medicine name, a single clear line such as "Take 1 tablet", and large full-width Taken/Skip buttons.
 - A status badge is shown only once a dose has been acted on (Taken, Skipped, or Missed); pending doses show no badge to reduce noise.
 - A low-stock or out-of-stock badge appears next to the dose line using the same stock status as the alert cards and the Medicines screen.
+- Fixed-course purchase warnings compare stock with the remaining course requirement, avoiding false warnings after correctly stocked doses are taken.
 - Alert cards use stronger color backgrounds and headings:
   - Critical out-of-stock alerts show "Needs attention now".
   - Refill warnings show "Refill reminders".
@@ -438,13 +441,14 @@ Purpose:
 - Show days remaining.
 - Show treatment type.
 - Show low-stock, out-of-stock, and course-complete badges.
-- Allow Refill, Edit, Disable, and Delete actions.
+- Allow Refill, Edit, Disable, Reactivate, and Delete actions.
 
 UX details:
 
 - Tapping a card opens the medication detail screen; a chevron hints that the whole card is tappable.
 - Primary actions are Refill and Edit; Refill opens a small dialog to add units to current stock without reopening the full form.
 - Disable/Delete are secondary and require a second confirm tap.
+- Disabled medicines stay in the list with a Disabled badge and can be reactivated.
 - Fixed Course cards show required stock, remaining doses, and purchase warnings.
 - Adding medicine is done from the single app-wide floating button, so the screen has no duplicate header add button.
 
@@ -577,7 +581,7 @@ Localization:
 
 Export behavior:
 
-- JSON export is generated locally.
+- JSON export is generated locally and includes active and disabled medicines, schedules, dose events, vaccinations, settings, and a format version.
 - Android's document picker lets the user save the JSON file to a chosen location.
 
 ## Offline-First Behavior
@@ -648,13 +652,13 @@ Covered logic:
 - Multiple daily reminder times.
 - Hourly interval schedules across midnight.
 - Prescription-style per-time dose amounts and Fixed Course stock requirements.
+- Fixed-course remaining-stock warnings after doses have been taken.
 
 ## Current Known Limitations
 
 - Dose reminders use exact alarms and fire on time, but aggressive OEM battery managers can still delay or kill background apps; disabling battery optimization is recommended.
 - There are no instrumented UI tests yet.
-- There is no database migration strategy beyond destructive migration in the MVP.
-- The current schema is at version 5 (per-schedule dose amounts in v2, medication food timing in v3, vaccinations table in v4, per-dose deducted-amount in v5), still using destructive migration.
+- The current schema is at version 5 (per-schedule dose amounts in v2, medication food timing in v3, vaccinations table in v4, per-dose deducted-amount in v5). Explicit v1→v5 Room migrations preserve existing data, and the current schema is exported for migration verification.
 - There is no encrypted database layer.
 - Dose history exists, but advanced analytics and charts are not implemented.
 - A basic refill (add to current stock) exists on the Medicines and Detail screens; there is no separate refill transaction history yet.
@@ -670,9 +674,8 @@ High-value next steps:
 - Add an in-app prompt to allow exact alarms (Android 12) and to disable battery optimization for best reliability (exact alarms are already the default reminder mechanism).
 - Add accessibility review with font scale, TalkBack labels, and contrast verification.
 - Add instrumented Compose UI tests for key flows.
-- Add Room migrations before releasing beyond MVP.
+- Add automated Room migration tests for every exported historical schema.
 - Add a missed-dose policy setting for grace period length.
-- Add recurring reminder horizon refresh work so reminders stay scheduled even if the app is not opened for more than 7 days.
 - Add search/filter in Inventory for users with many medications.
 - Add export/import support for full local backup and restore.
 

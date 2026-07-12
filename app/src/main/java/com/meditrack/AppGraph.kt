@@ -3,6 +3,7 @@ package com.meditrack
 import android.content.Context
 import androidx.room.Room
 import com.meditrack.data.local.AppDatabase
+import com.meditrack.data.local.DatabaseMigrations
 import com.meditrack.data.repository.MedicationRepository
 import com.meditrack.data.repository.SettingsRepository
 import com.meditrack.data.repository.VaccinationRepository
@@ -31,7 +32,7 @@ object AppGraph {
             AppDatabase::class.java,
             "meditrack.db"
         )
-            .fallbackToDestructiveMigration()
+            .addMigrations(*DatabaseMigrations.ALL)
             .build()
         medicationRepository = MedicationRepository(database)
         vaccinationRepository = VaccinationRepository(database)

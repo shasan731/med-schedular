@@ -26,6 +26,10 @@ interface MedicationDao {
     fun observeAllMedicationsWithSchedules(): Flow<List<MedicationWithSchedules>>
 
     @Transaction
+    @Query("SELECT * FROM medications ORDER BY isActive DESC, name COLLATE NOCASE")
+    suspend fun getAllMedicationsWithSchedules(): List<MedicationWithSchedules>
+
+    @Transaction
     @Query("SELECT * FROM medications WHERE id = :id")
     fun observeMedicationWithSchedules(id: Long): Flow<MedicationWithSchedules?>
 
@@ -50,6 +54,9 @@ interface MedicationDao {
 
     @Query("UPDATE medications SET isActive = 0, updatedAt = :updatedAt WHERE id = :id")
     suspend fun disableMedication(id: Long, updatedAt: java.time.LocalDateTime)
+
+    @Query("UPDATE medications SET isActive = 1, updatedAt = :updatedAt WHERE id = :id")
+    suspend fun reactivateMedication(id: Long, updatedAt: java.time.LocalDateTime)
 
     @Query("DELETE FROM medications WHERE id = :id")
     suspend fun deleteMedicationById(id: Long)
